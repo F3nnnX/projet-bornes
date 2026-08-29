@@ -1,0 +1,13 @@
+# Dépendances et artefacts de test ; rien de tout cela n'appartient au dépôt.
+node_modules/
+package-lock.json
+.DS_Store
+*.log
+
+# Photos et captures de test : elles peuvent contenir des plaques d'immatriculation,
+# donc des données personnelles. Elles ne doivent jamais être committées (garde-fou n°4).
+*.jpg
+*.jpeg
+*.png
+*.heic
+!03-marque/**/*.png
