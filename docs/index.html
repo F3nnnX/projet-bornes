@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f5132">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Borne">
+<title>Signaler une borne bloquée</title>
+<!--
+  PROJET « BORNES » — v3, 29 août 2026. Usage personnel (Félix Casellato).
+
+  CE QUI A CHANGÉ, ET CE QUE ÇA COÛTE
+  Le garde-fou « zéro requête réseau » est levé sur décision du fondateur.
+  L'appli interroge maintenant deux API publiques françaises :
+    · api-adresse.data.gouv.fr   → coordonnées vers adresse postale + code INSEE
+    · api-lannuaire.service-public.fr → services compétents de cette commune
+  Conséquence à assumer : la position de l'utilisateur est transmise à un
+  tiers, fût-il une administration. En échange, l'appli n'a plus de base à
+  maintenir — ce qui était l'objection la plus grave de la red team (A2).
+  Tout échec réseau dégrade proprement : coordonnées brutes et saisie
+  manuelle. L'appli reste utilisable dans un parking sans réseau.
+
+  CE QUI N'A PAS CHANGÉ
+    · Rien n'est stocké. Ni serveur, ni localStorage, ni cookie.
+    · Aucun script, style ou police distants. Un autotest le vérifie.
+    · Le 17, le 112, le 15, le 18 et le 114 sont refusés en dur.
+
+  ⚠ LES DEUX API N'ONT PAS PU ÊTRE APPELÉES DEPUIS L'ENVIRONNEMENT DE
+  DÉVELOPPEMENT (proxy bloquant). Le code d'appel est écrit défensivement
+  et les noms de champs sont cherchés de plusieurs façons, mais le contrat
+  réel n'est pas vérifié. L'écran « Diagnostic », en pied de page, montre
+  la requête envoyée et la réponse brute : c'est lui qui permettra de
+  corriger les noms de champs au premier essai sur le terrain.
+-->
+<style>
+:root{
+  --fond:#f7f7f5; --carte:#fff; --texte:#1a1a18; --doux:#5c5c55; --trait:#dedbd4;
+  --accent:#0f5132; --accent-clair:#e7f0ea; --alerte:#8a2b1f; --alerte-clair:#fbecea;
+  --rayon:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --fond:#15151a; --carte:#1e1e25; --texte:#ececf0; --doux:#a0a0ab; --trait:#33333d;
+         --accent:#5fbf8f; --accent-clair:#1c2f26; --alerte:#f0857a; --alerte-clair:#33201d; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);
+  font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 3rem}
+h1{font-size:1.6rem;line-height:1.2;margin:0 0 .5rem;font-weight:650;letter-spacing:-.015em}
+h2{font-size:1.2rem;margin:0 0 .5rem;font-weight:650;letter-spacing:-.01em}
+h3{font-size:.82rem;margin:1.2rem 0 .4rem;font-weight:650;color:var(--doux);
+   text-transform:uppercase;letter-spacing:.06em}
+p{margin:0 0 .8rem}
+.ecran{display:none}
+.ecran.actif{display:block}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);
+  padding:.9rem 1rem;margin:0 0 .8rem}
+.doux{color:var(--doux);font-size:.88rem}
+.bouton{display:block;width:100%;padding:.95rem 1rem;border-radius:var(--rayon);border:0;
+  background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer;
+  text-align:center;text-decoration:none;margin:0 0 .55rem}
+@media (prefers-color-scheme:dark){ .bouton{color:#0d1a13} }
+.bouton.secondaire{background:transparent;color:var(--texte);border:1px solid var(--trait);font-weight:500}
+.bouton.geant{padding:1.8rem 1rem;font-size:1.25rem}
+label{display:block;font-weight:600;margin:0 0 .25rem;font-size:.88rem}
+input[type=text],textarea{width:100%;padding:.7rem;border:1px solid var(--trait);
+  border-radius:10px;background:var(--fond);color:var(--texte);font:inherit;margin:0 0 .6rem}
+textarea{min-height:12rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.78rem;line-height:1.55}
+.duo{display:flex;gap:.55rem}
+.duo>div{flex:1}
+.avert{background:var(--alerte-clair);border:1px solid var(--alerte);border-radius:var(--rayon);
+  padding:.75rem .9rem;margin:0 0 .8rem;font-size:.88rem}
+.avert strong{color:var(--alerte)}
+.info{background:var(--accent-clair);border-radius:10px;padding:.7rem .9rem;font-size:.88rem;margin:0 0 .8rem}
+.apercu,video{width:100%;border-radius:10px;display:block;margin:0 0 .55rem;background:#000}
+.etat{font-size:.83rem;color:var(--doux);margin:0 0 .5rem}
+.pastille{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;margin-right:.4rem;
+  background:var(--doux);vertical-align:middle}
+.pastille.ok{background:var(--accent)} .pastille.ko{background:var(--alerte)}
+.ok{color:var(--accent);font-weight:600} .ko{color:var(--alerte);font-weight:600}
+details{margin:0 0 .8rem} summary{cursor:pointer;font-weight:600;font-size:.88rem;padding:.35rem 0}
+pre{white-space:pre-wrap;word-break:break-all;font-size:.72rem;background:var(--carte);
+  border:1px solid var(--trait);border-radius:10px;padding:.7rem;max-height:22rem;overflow:auto}
+#resultats-tests{padding-left:1.1rem;margin:0}
+#resultats-tests li{margin:0 0 .28rem;font-size:.86rem}
+footer{max-width:34rem;margin:1.5rem auto 0;padding:1rem 1rem 2rem;font-size:.8rem;
+  color:var(--doux);border-top:1px solid var(--trait)}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ─── 1. ACCUEIL ─── -->
+<section id="ecran-accueil" class="ecran actif">
+  <h1>Borne bloquée</h1>
+  <p class="doux">Une photo, un coup d'œil, c'est parti.</p>
+  <button class="bouton geant" id="btn-commencer">Signaler et prendre une photo</button>
+  <p class="etat"><span class="pastille" id="voyant"></span><span id="etat-position">Position non relevée</span></p>
+  <button class="bouton secondaire" id="btn-a-propos">Ce que fait cette appli</button>
+</section>
+
+<!-- ─── À PROPOS ─── -->
+<section id="ecran-apropos" class="ecran">
+  <h2>Ce que fait cette appli</h2>
+  <p>Elle relève votre position, la convertit en adresse, cherche le service compétent de la
+  commune, assemble le signalement et l'envoie avec la photo.</p>
+  <h3>Ce qu'elle envoie, et à qui</h3>
+  <ul class="doux">
+    <li><strong>Vos coordonnées GPS</strong> à <code>api-adresse.data.gouv.fr</code>, pour
+    obtenir l'adresse. Service public, gratuit, sans compte.</li>
+    <li><strong>Le code INSEE de la commune</strong> à
+    <code>api-lannuaire.service-public.fr</code>, pour trouver le commissariat. Rien de
+    personnel n'y transite.</li>
+    <li>Rien d'autre. Pas de compte, pas d'historique, pas de mesure d'audience, pas de cookie.
+    Rien n'est conservé : tout disparaît au rechargement.</li>
+  </ul>
+  <h3>Sans réseau</h3>
+  <p class="doux">Dans un parking souterrain, les deux appels échouent et l'appli le dit. Le
+  message se construit quand même avec les coordonnées brutes, et vous écrivez l'adresse.</p>
+  <button class="bouton secondaire" data-retour="accueil">Retour</button>
+</section>
+
+<!-- ─── 2. PHOTO ─── -->
+<section id="ecran-photo" class="ecran">
+  <h2>La photo</h2>
+  <div class="carte" id="bloc-camera" hidden>
+    <video id="visee" playsinline muted autoplay></video>
+    <button class="bouton" id="btn-declencher">Prendre la photo</button>
+  </div>
+  <img id="apercu" class="apercu" alt="" hidden>
+  <div class="carte" id="bloc-fichier">
+    <label for="champ-photo">Prendre ou choisir une photo</label>
+    <input type="file" id="champ-photo" accept="image/*" capture="environment">
+  </div>
+  <p class="etat" id="etat-photo">La photo est obligatoire : c'est la pièce du signalement.</p>
+  <button class="bouton" id="btn-photo-suite" hidden>Continuer</button>
+  <button class="bouton secondaire" data-retour="accueil">Annuler</button>
+</section>
+
+<!-- ─── 3. RÉSUMÉ ET ENVOI ─── -->
+<section id="ecran-resume" class="ecran">
+  <h2>Vérifiez, puis envoyez</h2>
+
+  <img id="apercu-resume" class="apercu" alt="Photo prise à l'instant" hidden>
+
+  <div class="carte">
+    <h3 style="margin-top:0">Où</h3>
+    <p class="etat" id="resume-lieu">…</p>
+    <label for="champ-adresse">Adresse</label>
+    <input type="text" id="champ-adresse" placeholder="Adresse ou emplacement de la borne" autocomplete="off">
+  </div>
+
+  <div class="carte">
+    <h3 style="margin-top:0">À qui</h3>
+    <div id="resume-service"></div>
+  </div>
+
+  <div class="carte" id="bloc-signature">
+    <h3 style="margin-top:0">Votre signature</h3>
+    <div id="signature-posee" hidden>
+      <p class="etat" id="signature-resume"></p>
+      <button class="bouton secondaire" id="btn-modifier-signature">Modifier</button>
+    </div>
+    <div id="signature-saisie">
+      <p class="etat">Saisie une seule fois. Elle reste sur ce téléphone et n'est envoyée nulle
+      part — elle ne figure pas dans le code de l'application.</p>
+      <label for="champ-nom">Prénom et nom</label>
+      <input type="text" id="champ-nom" placeholder="Prénom Nom" autocomplete="name">
+      <label for="champ-tel">Téléphone</label>
+      <input type="text" id="champ-tel" placeholder="06 12 34 56 78" autocomplete="tel" inputmode="tel">
+      <button class="bouton secondaire" id="btn-garder-signature">Mémoriser</button>
+    </div>
+  </div>
+
+  <h3>Le message</h3>
+  <textarea id="champ-message" spellcheck="true"></textarea>
+
+  <div id="bloc-actions"></div>
+  <button class="bouton secondaire" data-retour="accueil">Recommencer</button>
+</section>
+
+<!-- ─── DIAGNOSTIC ─── -->
+<section id="ecran-diag" class="ecran">
+  <h2>Diagnostic</h2>
+  <p class="doux">Ce que l'appli a demandé aux deux API, et ce qu'elles ont répondu. À consulter
+  au premier essai sur le terrain : si le service n'est pas trouvé, la réponse brute dira
+  pourquoi.</p>
+  <pre id="journal">Aucun appel pour l'instant.</pre>
+  <button class="bouton secondaire" data-retour="accueil">Retour</button>
+</section>
+
+<!-- ─── AUTOTESTS ─── -->
+<section id="ecran-tests" class="ecran">
+  <h2>Autotests</h2>
+  <p class="doux" id="bilan-tests"></p>
+  <ol id="resultats-tests"></ol>
+  <button class="bouton secondaire" data-retour="accueil">Retour</button>
+</section>
+
+</main>
+
+<footer>
+  Projet « Bornes » — usage personnel. Rien n'est conservé.
+  <a href="#diag" id="lien-diag">Diagnostic</a> · <a href="#tests" id="lien-tests">Autotests</a>
+</footer>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONSTANTES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* La signature est saisie une fois et mémorisée SUR L'APPAREIL, pas
+   écrite dans le code. Deux raisons, et la seconde est la vraie : elle
+   évite de retaper son nom à chaque signalement, et elle permet au dépôt
+   d'être public sans y publier un nom et un numéro de portable.
+
+   C'est la seule chose que cette application stocke. Le garde-fou n°4
+   visait les données de tiers ; il s'agit ici des siennes propres, sur
+   son propre téléphone, et rien ne sort du navigateur. Un autotest
+   vérifie qu'aucune autre clé n'est écrite. */
+const CLE_SIGNATURE = 'bornes.expediteur';
+
+function chargerExpediteur(){
+  try {
+    const brut = localStorage.getItem(CLE_SIGNATURE);
+    if (!brut) return null;
+    const o = JSON.parse(brut);
+    return (o && o.nom) ? { nom: String(o.nom), tel: String(o.tel || '') } : null;
+  } catch (e) { return null; }   /* navigation privée, stockage refusé */
+}
+
+function enregistrerExpediteur(nom, tel){
+  const o = { nom: String(nom || '').trim(), tel: String(tel || '').trim() };
+  if (!o.nom) return null;
+  try { localStorage.setItem(CLE_SIGNATURE, JSON.stringify(o)); } catch (e) {}
+  return o;
+}
+
+const OBJET = 'Signalement – Véhicule stationné sans recharge sur borne électrique';
+
+/* Une borne bloquée n'est pas une urgence. Refus dur, jamais assoupli. */
+const NUMEROS_INTERDITS = ['17', '112', '15', '18', '114'];
+
+/* Ordre de préférence des services. Le fondateur a demandé « le
+   commissariat » : la police nationale passe donc devant. La police
+   municipale est pourtant l'interlocuteur habituel du stationnement —
+   inverser les deux premières lignes suffit à changer d'avis. */
+const PREFERENCE = ['commissariat', 'gendarmerie', 'police_municipale', 'mairie'];
+
+const DELAI_RESEAU_MS = 6000;
+
+/* Tout l'état de la session. En mémoire seulement. */
+const etat = {
+  photo: null, lat: null, lon: null, precision: null,
+  adresse: '', commune: '', codeInsee: '', codePostal: '',
+  expediteur: null, horodatage: null, service: null, alternatives: []
+};
+
+const journal = [];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UTILITAIRES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Les espaces fines insécables sont justes à l'écran mais traversent mal
+   les messageries. Tout ce qui sort de l'appli repasse en espace normale. */
+function versTexteBrut(s){ return String(s == null ? '' : s).replace(/[\u202F\u00A0]/g, ' '); }
+
+function deuxChiffres(n){ return String(n).padStart(2, '0'); }
+function formaterDate(d){
+  return deuxChiffres(d.getDate()) + '/' + deuxChiffres(d.getMonth()+1) + '/' + d.getFullYear();
+}
+function formaterHeure(d){ return deuxChiffres(d.getHours()) + 'h' + deuxChiffres(d.getMinutes()); }
+
+function numeroUtilisable(n){
+  const brut = String(n || '').replace(/[^0-9+]/g, '');
+  return !!brut && NUMEROS_INTERDITS.indexOf(brut) === -1;
+}
+function lienTel(n){
+  return numeroUtilisable(n) ? 'tel:' + String(n).replace(/[^0-9+]/g, '') : null;
+}
+
+function noter(entree){
+  journal.unshift('[' + new Date().toLocaleTimeString('fr-FR') + '] ' + entree);
+  const el = document.getElementById('journal');
+  if (el) el.textContent = journal.join('\n\n');
+}
+
+/* fetch avec délai maximal : sans ça, une API lente bloque l'écran de
+   résumé indéfiniment, et l'utilisateur attend devant une borne. */
+function recuperer(url){
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const minuteur = setTimeout(function(){ if (ctrl) ctrl.abort(); }, DELAI_RESEAU_MS);
+  return fetch(url, ctrl ? { signal: ctrl.signal } : undefined)
+    .then(function(r){
+      clearTimeout(minuteur);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .catch(function(e){ clearTimeout(minuteur); throw e; });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   API 1 — COORDONNÉES VERS ADRESSE
+   https://api-adresse.data.gouv.fr/reverse/?lon=&lat=
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function lireAdresse(json){
+  const p = json && json.features && json.features[0] && json.features[0].properties;
+  if (!p) return null;
+  return {
+    adresse: p.label || p.name || '',
+    commune: p.city || '',
+    codeInsee: p.citycode || '',
+    codePostal: p.postcode || ''
+  };
+}
+
+function chercherAdresse(lat, lon){
+  const url = 'https://api-adresse.data.gouv.fr/reverse/?lon=' + encodeURIComponent(lon)
+    + '&lat=' + encodeURIComponent(lat);
+  noter('API Adresse → ' + url);
+  return recuperer(url).then(function(j){
+    const a = lireAdresse(j);
+    noter('API Adresse ← ' + (a ? JSON.stringify(a) : 'aucun résultat exploitable'));
+    return a;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   API 2 — SERVICES COMPÉTENTS DE LA COMMUNE
+   https://api-lannuaire.service-public.fr — dataset api-lannuaire-administration
+
+   ⚠ Le schéma n'a pas pu être vérifié depuis l'environnement de
+   développement. La lecture ci-dessous cherche donc les valeurs de
+   plusieurs façons plutôt que de parier sur un nom de champ. L'écran
+   Diagnostic montre la réponse brute pour corriger au premier essai.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function premiereValeur(obj, clefs){
+  for (let i = 0; i < clefs.length; i++) {
+    const v = obj[clefs[i]];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+/* Un courriel peut arriver sous forme de chaîne, de tableau, ou d'un JSON
+   encodé dans une chaîne. On le cherche à la mine plutôt qu'au plan. */
+function extraireCourriel(enregistrement){
+  const direct = premiereValeur(enregistrement, ['adresse_courriel', 'courriel', 'email', 'mail']);
+  if (direct && direct.indexOf('@') !== -1 && direct.indexOf('{') === -1) return direct;
+  const texte = JSON.stringify(enregistrement);
+  const trouve = texte.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+  return trouve ? trouve[0] : '';
+}
+
+function extraireTelephone(enregistrement){
+  const direct = premiereValeur(enregistrement, ['telephone', 'tel', 'numero']);
+  const source = (direct && direct.indexOf('{') === -1) ? direct : JSON.stringify(enregistrement);
+  const trouve = source.match(/(?:\+33|0)\s?[1-9](?:[\s.-]?\d{2}){4}/);
+  return trouve ? trouve[0].replace(/[\s.-]+/g, ' ').trim() : '';
+}
+
+function classer(enregistrement){
+  const t = JSON.stringify(enregistrement).toLowerCase();
+  if (t.indexOf('police_municipale') !== -1 || t.indexOf('police municipale') !== -1) return 'police_municipale';
+  if (t.indexOf('commissariat') !== -1 || t.indexOf('police_nationale') !== -1) return 'commissariat';
+  if (t.indexOf('gendarmerie') !== -1) return 'gendarmerie';
+  if (t.indexOf('mairie') !== -1) return 'mairie';
+  return 'autre';
+}
+
+function lireServices(json){
+  const brut = (json && (json.results || json.records)) || [];
+  return brut.map(function(r){
+    const e = r.fields || r.record && r.record.fields || r;
+    const type = classer(e);
+    return {
+      nom: premiereValeur(e, ['nom', 'name', 'intitule']) || type,
+      type: type,
+      courriel: extraireCourriel(e),
+      telephone: extraireTelephone(e),
+      url: premiereValeur(e, ['site_internet', 'url', 'website'])
+    };
+  }).filter(function(s){ return s.courriel || numeroUtilisable(s.telephone) || s.url; });
+}
+
+/* Le tri suit PREFERENCE, et à type égal privilégie ce qui a un courriel :
+   c'est le seul canal qui porte la photo et une trace écrite. */
+function ordonner(services){
+  return services.slice().sort(function(a, b){
+    const ra = PREFERENCE.indexOf(a.type), rb = PREFERENCE.indexOf(b.type);
+    const na = ra === -1 ? 99 : ra, nb = rb === -1 ? 99 : rb;
+    if (na !== nb) return na - nb;
+    return (b.courriel ? 1 : 0) - (a.courriel ? 1 : 0);
+  });
+}
+
+function chercherServices(codeInsee){
+  const base = 'https://api-lannuaire.service-public.fr/api/explore/v2.1/catalog/datasets/'
+    + 'api-lannuaire-administration/records';
+  const url = base + '?where=' + encodeURIComponent('code_insee_commune like "' + codeInsee + '"')
+    + '&limit=30';
+  noter('API Annuaire → ' + url);
+  return recuperer(url).then(function(j){
+    const s = ordonner(lireServices(j));
+    noter('API Annuaire ← ' + (j.total_count != null ? j.total_count + ' enregistrement(s), ' : '')
+      + s.length + ' service(s) contactable(s)\n'
+      + JSON.stringify(s.slice(0, 4), null, 1));
+    return s;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LE MESSAGE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function decrireLieu(e){
+  if (e.adresse) return e.adresse;
+  if (e.lat != null && e.lon != null) {
+    return 'coordonnées relevées ' + e.lat.toFixed(6) + ', ' + e.lon.toFixed(6)
+      + (e.precision != null ? ' (précision ' + Math.round(e.precision) + ' m)' : '');
+  }
+  return '[Adresse complète / Emplacement de la borne]';
+}
+
+function construireMessage(e){
+  const d = e.horodatage instanceof Date ? e.horodatage : new Date();
+  const l = [];
+  l.push('Bonjour,');
+  l.push('');
+  l.push('Je me permets de vous contacter pour vous signaler une situation constatée');
+  l.push('à l\'instant.');
+  l.push('');
+  l.push('Un véhicule est actuellement stationné sur un emplacement réservé aux');
+  l.push('véhicules électriques, sans être raccordé à la borne de recharge.');
+  l.push('');
+  l.push('Aucun autre point de charge n\'étant accessible sur ce site, cela bloque');
+  l.push('mon accès à la recharge.');
+  l.push('');
+  l.push('Voici les informations constatées :');
+  l.push('');
+  l.push('* Date et heure : ' + formaterDate(d) + ' à ' + formaterHeure(d));
+  l.push('* Adresse précise : ' + decrireLieu(e));
+  l.push('');
+  /* La photo est obligatoire côté interface : l'annoncer permet au
+     destinataire de la chercher plutôt que de lire un courrier nu. */
+  l.push('Une photographie de la situation est jointe à ce message.');
+  l.push('');
+  l.push('Je vous transmets ces éléments afin qu\'un agent puisse, s\'il le juge');
+  l.push('utile, venir l\'apprécier sur place.');
+  l.push('');
+  l.push('En vous remerciant pour votre aide et votre travail au quotidien.');
+  l.push('');
+  l.push('Bien cordialement,');
+  l.push('');
+  const sig = e.expediteur || chargerExpediteur();
+  l.push(sig && sig.nom ? sig.nom : '[Prénom Nom]');
+  l.push(sig && sig.tel ? sig.tel : '[Numéro de téléphone]');
+  return { objet: versTexteBrut(OBJET), corps: versTexteBrut(l.join('\n')) };
+}
+
+function construireScriptTelephone(e){
+  const d = e.horodatage instanceof Date ? e.horodatage : new Date();
+  const l = [];
+  l.push('Bonjour. Ce n\'est pas une urgence, je vous appelle pour un signalement.');
+  l.push('Je suis ' + decrireLieu(e) + '.');
+  l.push('Un véhicule occupe un emplacement de recharge sans être raccordé à la borne,');
+  l.push('et il n\'y a pas d\'autre point de charge libre ici.');
+  l.push('Il est ' + formaterHeure(d) + '. Je vous laisse en juger.');
+  return versTexteBrut(l.join('\n'));
+}
+
+function lienMailto(adresse, objet, corps){
+  return 'mailto:' + encodeURIComponent(adresse || '')
+    + '?subject=' + encodeURIComponent(versTexteBrut(objet))
+    + '&body='    + encodeURIComponent(versTexteBrut(corps));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INTERFACE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const ECRANS = ['accueil','apropos','photo','resume','diag','tests'];
+function montrer(nom){
+  ECRANS.forEach(function(e){
+    const el = document.getElementById('ecran-' + e);
+    if (el) el.classList.toggle('actif', e === nom);
+  });
+  window.scrollTo(0, 0);
+  const t = document.querySelector('#ecran-' + nom + ' h1, #ecran-' + nom + ' h2');
+  if (t) { t.setAttribute('tabindex','-1'); t.focus({preventScroll:true}); }
+}
+
+function direEtat(texte, classe){
+  document.getElementById('etat-position').textContent = texte;
+  document.getElementById('voyant').className = 'pastille' + (classe ? ' ' + classe : '');
+}
+
+/* Tout le travail réseau se fait pendant que l'utilisateur cadre sa photo.
+   Quand il arrive sur le résumé, c'est déjà prêt. */
+function preparerEnArrierePlan(){
+  if (!navigator.geolocation) { direEtat('Géolocalisation indisponible', 'ko'); return; }
+  direEtat('Relevé de la position…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    etat.lat = pos.coords.latitude;
+    etat.lon = pos.coords.longitude;
+    etat.precision = pos.coords.accuracy;
+    direEtat('Position relevée, recherche de l\'adresse…', 'ok');
+    chercherAdresse(etat.lat, etat.lon).then(function(a){
+      if (!a) throw new Error('adresse introuvable');
+      etat.adresse = a.adresse; etat.commune = a.commune;
+      etat.codeInsee = a.codeInsee; etat.codePostal = a.codePostal;
+      direEtat(a.adresse, 'ok');
+      const champ = document.getElementById('champ-adresse');
+      if (champ && !champ.value) champ.value = a.adresse;
+      return a.codeInsee ? chercherServices(a.codeInsee) : [];
+    }).then(function(services){
+      etat.service = services[0] || null;
+      etat.alignes = services;
+      etat.alternatives = services.slice(1, 4);
+      if (etat.service) direEtat(etat.adresse + ' — ' + etat.service.nom, 'ok');
+      rafraichirResume();
+    }).catch(function(err){
+      noter('Échec réseau : ' + err.message);
+      direEtat('Réseau indisponible — coordonnées seules', 'ko');
+      rafraichirResume();
+    });
+  }, function(){
+    direEtat('Position refusée — écrivez l\'adresse', 'ko');
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+}
+
+/* ─── Appareil photo ─── */
+
+let fluxCamera = null;
+
+function ouvrirCamera(){
+  /* getUserMedia exige un contexte sécurisé. Sans lui, le champ fichier
+     ouvre quand même l'appareil natif grâce à capture="environment". */
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+    .then(function(flux){
+      fluxCamera = flux;
+      document.getElementById('visee').srcObject = flux;
+      document.getElementById('bloc-camera').hidden = false;
+      document.getElementById('bloc-fichier').hidden = true;
+    })
+    .catch(function(){});
+}
+function fermerCamera(){
+  if (fluxCamera) { fluxCamera.getTracks().forEach(function(t){ t.stop(); }); fluxCamera = null; }
+  document.getElementById('bloc-camera').hidden = true;
+}
+function poserPhoto(blob){
+  etat.photo = blob;
+  const img = document.getElementById('apercu');
+  img.src = URL.createObjectURL(blob);   /* URL locale, aucune requête */
+  img.hidden = false;
+  document.getElementById('etat-photo').textContent = 'Photo prise.';
+  document.getElementById('btn-photo-suite').hidden = false;
+}
+
+document.getElementById('btn-declencher').addEventListener('click', function(){
+  const v = document.getElementById('visee');
+  const c = document.createElement('canvas');
+  c.width = v.videoWidth || 1280; c.height = v.videoHeight || 960;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  c.toBlob(function(blob){
+    if (!blob) return;
+    poserPhoto(new File([blob], 'borne.jpg', { type: 'image/jpeg' }));
+    fermerCamera();
+    allerAuResume();
+  }, 'image/jpeg', 0.85);
+});
+
+document.getElementById('champ-photo').addEventListener('change', function(ev){
+  const f = ev.target.files && ev.target.files[0];
+  if (f) { poserPhoto(f); allerAuResume(); }
+});
+
+/* ─── Résumé ─── */
+
+function allerAuResume(){
+  fermerCamera();
+  etat.horodatage = new Date();
+  rafraichirResume();
+  montrer('resume');
+}
+
+function ligneService(s){
+  const canal = s.courriel ? s.courriel
+    : (numeroUtilisable(s.telephone) ? s.telephone : 'formulaire en ligne');
+  return '<strong>' + s.nom + '</strong><p class="doux">' + canal + '</p>';
+}
+
+function afficherSignature(){
+  const sig = etat.expediteur;
+  document.getElementById('signature-posee').hidden = !sig;
+  document.getElementById('signature-saisie').hidden = !!sig;
+  if (sig) {
+    document.getElementById('signature-resume').textContent =
+      sig.nom + (sig.tel ? ' · ' + sig.tel : ' · téléphone non renseigné');
+  }
+}
+
+function rafraichirResume(){
+  etat.adresse = document.getElementById('champ-adresse').value.trim() || etat.adresse;
+
+  document.getElementById('resume-lieu').textContent = (etat.lat != null)
+    ? 'GPS ' + etat.lat.toFixed(5) + ', ' + etat.lon.toFixed(5)
+      + (etat.commune ? ' — ' + etat.commune + ' ' + etat.codePostal : '')
+    : 'Position non relevée.';
+
+  const bloc = document.getElementById('resume-service');
+  if (etat.service) {
+    let html = ligneService(etat.service);
+    if (etat.alternatives && etat.alternatives.length) {
+      html += '<details><summary>Autre destinataire</summary>'
+        + etat.alternatives.map(function(s, i){
+            return '<p class="doux"><a href="#" data-alt="' + i + '">' + s.nom + '</a> — '
+              + (s.courriel || s.telephone || 'formulaire') + '</p>'; }).join('')
+        + '</details>';
+    }
+    bloc.innerHTML = html;
+    bloc.querySelectorAll('[data-alt]').forEach(function(a){
+      a.addEventListener('click', function(ev){
+        ev.preventDefault();
+        const i = parseInt(a.getAttribute('data-alt'), 10);
+        const choisi = etat.alternatives[i];
+        etat.alternatives = etat.alignes.filter(function(s){ return s !== choisi; }).slice(0, 3);
+        etat.service = choisi;
+        rafraichirResume();
+      });
+    });
+  } else {
+    bloc.innerHTML = '<div class="avert"><strong>Aucun service trouvé automatiquement.</strong> '
+      + 'Réseau indisponible, ou la commune n\'est pas dans l\'annuaire. Le message est prêt : '
+      + 'copiez-le et adressez-le au commissariat ou à la mairie.</div>';
+  }
+
+  const apercu = document.getElementById('apercu-resume');
+  if (etat.photo) { apercu.src = URL.createObjectURL(etat.photo); apercu.hidden = false; }
+
+  afficherSignature();
+  const m = construireMessage(etat);
+  document.getElementById('champ-message').value = m.corps;
+  construireActions(m);
+}
+
+function construireActions(m){
+  const zone = document.getElementById('bloc-actions');
+  zone.innerHTML = '';
+  const corps = document.getElementById('champ-message').value;
+  const courriel = etat.service && etat.service.courriel;
+
+  const partageable = etat.photo && navigator.canShare
+    && navigator.canShare({ files: [etat.photo] });
+
+  if (!etat.expediteur) {
+    zone.insertAdjacentHTML('beforeend',
+      '<div class="avert"><strong>Mémorisez votre signature d\'abord.</strong> Sans elle, le '
+      + 'message part avec des mentions entre crochets.</div>');
+  }
+
+  if (partageable) {
+    const b = document.createElement('button');
+    b.className = 'bouton';
+    b.textContent = courriel ? 'Envoyer avec la photo' : 'Partager avec la photo';
+    b.addEventListener('click', function(){
+      /* Le partage ne peut pas préremplir le destinataire : on le copie
+         dans le presse-papiers pour que le collage soit immédiat. */
+      if (courriel && navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(courriel).catch(function(){});
+      }
+      navigator.share({ title: OBJET, text: corps, files: [etat.photo] }).catch(function(){});
+    });
+    zone.appendChild(b);
+    if (courriel) {
+      zone.insertAdjacentHTML('beforeend',
+        '<p class="etat">L\'adresse <strong>' + courriel + '</strong> est copiée dans le '
+        + 'presse-papiers : collez-la dans le champ destinataire. Le partage joint la photo '
+        + 'mais ne peut pas la préremplir.</p>');
+    }
+  }
+
+  if (courriel) {
+    const a = document.createElement('a');
+    a.className = partageable ? 'bouton secondaire' : 'bouton';
+    a.href = lienMailto(courriel, m.objet, corps);
+    a.textContent = 'Ouvrir ma messagerie';
+    zone.appendChild(a);
+    if (!partageable) {
+      /* Le partage natif est le seul chemin qui joigne la photo. Sans lui,
+         l'utilisateur doit le faire — et la photo est obligatoire, donc on
+         le dit fort plutôt que discrètement. */
+      zone.insertAdjacentHTML('beforeend',
+        '<div class="avert"><strong>Joignez la photo à la main.</strong> Ce navigateur ne sait '
+        + 'pas la transmettre tout seul. C\'est la dernière image de votre galerie, et le '
+        + 'signalement ne vaut rien sans elle.</div>');
+    }
+  } else if (etat.service && numeroUtilisable(etat.service.telephone)) {
+    zone.insertAdjacentHTML('beforeend',
+      '<div class="info"><strong>Aucune adresse connue — appelez.</strong><br>'
+      + construireScriptTelephone(etat).split('\n')
+          .map(function(x){ return x.replace(/</g, '&lt;'); }).join('<br>') + '</div>');
+    const a = document.createElement('a');
+    a.className = 'bouton'; a.href = lienTel(etat.service.telephone);
+    a.textContent = 'Appeler ' + etat.service.telephone;
+    zone.appendChild(a);
+  } else if (etat.service && etat.service.url) {
+    const a = document.createElement('a');
+    a.className = 'bouton'; a.href = etat.service.url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = 'Ouvrir le formulaire de ' + etat.service.nom;
+    zone.appendChild(a);
+  }
+
+  const copier = document.createElement('button');
+  copier.className = 'bouton secondaire';
+  copier.textContent = 'Copier le message';
+  copier.addEventListener('click', function(){
+    const z = document.getElementById('champ-message');
+    z.select();
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(z.value).then(function(){ copier.textContent = 'Message copié'; });
+      ok = true;
+    } else { try { ok = document.execCommand('copy'); } catch (e) { ok = false; } }
+    copier.textContent = ok ? 'Message copié' : 'Copie impossible — sélectionnez le texte';
+  });
+  zone.appendChild(copier);
+}
+
+document.getElementById('champ-adresse').addEventListener('input', rafraichirResume);
+
+document.getElementById('btn-garder-signature').addEventListener('click', function(){
+  const sig = enregistrerExpediteur(document.getElementById('champ-nom').value,
+                                    document.getElementById('champ-tel').value);
+  if (!sig) { document.getElementById('champ-nom').focus(); return; }
+  etat.expediteur = sig;
+  rafraichirResume();
+});
+document.getElementById('btn-modifier-signature').addEventListener('click', function(){
+  document.getElementById('champ-nom').value = etat.expediteur ? etat.expediteur.nom : '';
+  document.getElementById('champ-tel').value = etat.expediteur ? etat.expediteur.tel : '';
+  etat.expediteur = null;
+  rafraichirResume();
+});
+
+/* ─── Boutons ─── */
+
+document.getElementById('btn-commencer').addEventListener('click', function(){
+  if (etat.lat == null) preparerEnArrierePlan();
+  montrer('photo');
+  ouvrirCamera();
+});
+document.getElementById('btn-a-propos').addEventListener('click', function(){ montrer('apropos'); });
+document.getElementById('btn-photo-suite').addEventListener('click', allerAuResume);
+document.querySelectorAll('[data-retour]').forEach(function(b){
+  b.addEventListener('click', function(){ fermerCamera(); montrer(b.getAttribute('data-retour')); });
+});
+document.getElementById('lien-diag').addEventListener('click', function(ev){
+  ev.preventDefault(); montrer('diag');
+});
+document.getElementById('lien-tests').addEventListener('click', function(ev){
+  ev.preventDefault(); lancerTests(); montrer('tests');
+});
+
+etat.expediteur = chargerExpediteur();
+preparerEnArrierePlan();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AUTOTESTS
+   Les deux API ne sont pas joignables en test : leurs réponses sont
+   simulées à partir de charges utiles réalistes. Ce que ces tests
+   garantissent, c'est que la LECTURE des réponses tient — pas que le
+   contrat d'API soit celui-là. Seul le terrain le dira.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function lancerTests(){
+  const t = [];
+  const v = function(nom, cond, detail){ t.push({ nom: nom, ok: !!cond, detail: detail || '' }); };
+
+  const base = {
+    lat: 43.1975, lon: 5.6250, precision: 8,
+    adresse: 'Avenue du Général de Gaulle, 13600 Ceyreste', commune: 'Ceyreste',
+    codeInsee: '13024', codePostal: '13600',
+    expediteur: { nom: 'Félix Casellato', tel: '06 24 99 47 40' },
+    horodatage: new Date(2026, 7, 29, 14, 5)
+  };
+  const m = construireMessage(base);
+
+  v('Le message se construit', !!(m.corps && m.objet));
+  v('L\'objet est celui validé par le fondateur',
+    m.objet === 'Signalement – Véhicule stationné sans recharge sur borne électrique');
+  v('La signature mémorisée est reprise, sans gabarit',
+    m.corps.indexOf('Félix Casellato') !== -1 && m.corps.indexOf('06 24 99 47 40') !== -1
+    && m.corps.indexOf('[') === -1);
+  v('Sans signature, les gabarits restent visibles',
+    construireMessage(Object.assign({}, base, { expediteur: null })).corps
+      .indexOf('[Prénom Nom]') !== -1, 'pour que l\'oubli se voie');
+  v('Le message porte la date et l\'heure', m.corps.indexOf('29/08/2026 à 14h05') !== -1);
+  v('Le message porte l\'adresse trouvée', m.corps.indexOf('13600 Ceyreste') !== -1);
+  v('Le message ne décrit aucun véhicule',
+    m.corps.indexOf('Véhicule constaté') === -1 && m.corps.indexOf('Immatriculation') === -1,
+    'supprimé le 29/08 : sans OCR, la saisie ne valait pas le clic');
+  v('Aucune plaque ne peut apparaître, sous aucune forme',
+    !/immatricul|plaque|[A-Z]{2}-\d{3}-[A-Z]{2}/i.test(m.corps));
+
+  const mv = m;
+
+  const mSansAdresse = construireMessage(Object.assign({}, base, { adresse: '' }));
+  v('Sans adresse, les coordonnées prennent le relais',
+    mSansAdresse.corps.indexOf('43.197500') !== -1);
+  v('Le message ne porte aucun jugement',
+    !/chauffard|incivil|irrespons|abusif|scandal/i.test(mv.corps));
+  v('La photo est annoncée comme jointe', m.corps.indexOf('photographie') !== -1,
+    'elle est obligatoire : le destinataire doit savoir la chercher');
+  v('Aucune espace fine ne sort de l\'appli', !/[\u202F\u00A0]/.test(mv.corps + mv.objet));
+  v('versTexteBrut remplace bien la fine', versTexteBrut('quoi\u202F?') === 'quoi ?');
+
+  /* Lecture d'une réponse d'API Adresse. */
+  const repAdresse = { features: [ { properties: {
+    label: '10 Avenue du Maréchal Foch 13600 Ceyreste', city: 'Ceyreste',
+    citycode: '13024', postcode: '13600' } } ] };
+  const a = lireAdresse(repAdresse);
+  v('L\'adresse est lue', a && a.adresse.indexOf('Ceyreste') !== -1);
+  v('Le code INSEE est lu', a && a.codeInsee === '13024', 'c\'est lui qui interroge l\'annuaire');
+  v('Une réponse vide ne casse rien', lireAdresse({ features: [] }) === null);
+
+  /* Lecture d'une réponse d'annuaire, dans trois formes différentes —
+     le schéma réel n'ayant pas pu être vérifié. */
+  const repAnnuaire = { results: [
+    { nom: 'Commissariat de police de La Ciotat', pivot: '[{"type_service_local":"commissariat_police"}]',
+      adresse_courriel: 'commissariat.laciotat@exemple.gouv.fr', telephone: '04 42 08 20 30' },
+    { nom: 'Mairie de Ceyreste', pivot: '[{"type_service_local":"mairie"}]',
+      adresse_courriel: 'contact@ceyreste.fr', telephone: '04 42 83 90 00' },
+    { nom: 'Brigade de gendarmerie', pivot: '[{"type_service_local":"gendarmerie"}]',
+      telephone: '04 42 71 90 17' },
+    { nom: 'Service sans contact', pivot: '[]' }
+  ] };
+  const s = ordonner(lireServices(repAnnuaire));
+  v('Les services sont lus', s.length === 3, 'celui sans contact est écarté');
+  v('Le commissariat passe en premier', s[0].type === 'commissariat',
+    'préférence demandée par le fondateur');
+  v('Son courriel est extrait',
+    s[0].courriel === 'commissariat.laciotat@exemple.gouv.fr');
+  v('Son téléphone est extrait', s[0].telephone === '04 42 08 20 30');
+  v('La gendarmerie passe avant la mairie',
+    s.map(function(x){ return x.type; }).indexOf('gendarmerie')
+    < s.map(function(x){ return x.type; }).indexOf('mairie'));
+  v('Un courriel caché dans un champ JSON est retrouvé',
+    extraireCourriel({ pivot: '{"a":1}', divers: 'ecrire a police@exemple.gouv.fr svp' })
+      === 'police@exemple.gouv.fr',
+    'le schéma réel n\'est pas vérifié : on cherche à la mine');
+  v('Une réponse vide ne casse rien', lireServices({}).length === 0);
+  v('Le format « records » est accepté aussi',
+    lireServices({ records: [ { fields: { nom: 'X', pivot: 'mairie',
+      adresse_courriel: 'x@y.fr' } } ] }).length === 1);
+
+  v('Les numéros d\'urgence sont refusés',
+    ['17','112','15','18','114'].every(function(n){ return lienTel(n) === null; }));
+  v('Un service à numéro d\'urgence est écarté de la liste',
+    lireServices({ results: [ { nom: 'Police secours', pivot: 'commissariat', telephone: '17' } ] })
+      .length === 0, 'une borne bloquée n\'est pas une urgence');
+  v('Un numéro ordinaire est accepté', lienTel('04 42 08 20 30') === 'tel:0442082030');
+
+  const scr = construireScriptTelephone(base);
+  v('Le script annonce que ce n\'est pas une urgence',
+    scr.indexOf('Ce n\'est pas une urgence') !== -1);
+  v('Le script reste court', scr.length < 500, scr.length + ' caractères');
+
+  const lien = lienMailto('a@b.fr', m.objet, m.corps);
+  v('Le lien mailto encode les retours à la ligne', lien.indexOf('%0A') !== -1);
+  v('Le lien mailto n\'a pas d\'espace brute', !/\s/.test(lien));
+
+  const externes = [];
+  document.querySelectorAll('script[src], link[rel=stylesheet], img[src], iframe[src], source[src]')
+    .forEach(function(el){
+      const u = el.getAttribute('src') || el.getAttribute('href') || '';
+      if (/^(https?:)?\/\//i.test(u)) externes.push(u);
+    });
+  v('Aucune ressource externe n\'est chargée au démarrage', externes.length === 0, externes.join(', '));
+  /* Une seule clé a le droit d'exister : la signature de l'utilisateur,
+     sur son propre appareil. Ce test tombe si quoi que ce soit d'autre
+     est écrit — un historique, un compteur, une position mémorisée. */
+  v('Seule la signature est stockée, rien d\'autre', (function(){
+      try {
+        const clefs = Object.keys(localStorage);
+        return sessionStorage.length === 0
+          && clefs.every(function(k){ return k === CLE_SIGNATURE; });
+      } catch (e) { return true; } }()), 'aucun historique, aucun compteur');
+  v('Une signature mémorisée se relit', (function(){
+      let avant = null;
+      try { avant = localStorage.getItem(CLE_SIGNATURE); } catch (e) {}
+      enregistrerExpediteur('Essai Test', '01 02 03 04 05');
+      const relu = chargerExpediteur();
+      try {
+        if (avant === null) localStorage.removeItem(CLE_SIGNATURE);
+        else localStorage.setItem(CLE_SIGNATURE, avant);
+      } catch (e) {}
+      return relu && relu.nom === 'Essai Test' && relu.tel === '01 02 03 04 05';
+    })());
+  v('Une signature sans nom est refusée', enregistrerExpediteur('   ', '06') === null);
+
+  const liste = document.getElementById('resultats-tests');
+  liste.innerHTML = t.map(function(r){
+    return '<li><span class="' + (r.ok ? 'ok' : 'ko') + '">' + (r.ok ? '✓' : '✗') + '</span> '
+      + r.nom + (r.detail ? ' <span class="doux">— ' + r.detail + '</span>' : '') + '</li>';
+  }).join('');
+  const ko = t.filter(function(r){ return !r.ok; }).length;
+  document.getElementById('bilan-tests').innerHTML = ko === 0
+    ? '<span class="ok">' + t.length + ' tests, aucun échec.</span>'
+    : '<span class="ko">' + ko + ' échec(s) sur ' + t.length + '.</span>';
+  return { total: t.length, echecs: ko, details: t };
+}
+
+window.lancerTests = lancerTests;
+window.__bornes = { construireMessage, construireScriptTelephone, lireAdresse, lireServices,
+                    ordonner, extraireCourriel, extraireTelephone, classer, chargerExpediteur,
+                    enregistrerExpediteur, lienTel, lienMailto, numeroUtilisable,
+                    versTexteBrut, etat, CLE_SIGNATURE };
+
+if (location.hash === '#tests') { lancerTests(); montrer('tests'); }
+if (location.hash === '#diag') { montrer('diag'); }
+</script>
+</body>
+</html>

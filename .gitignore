@@ -11,3 +11,5 @@ package-lock.json
 *.png
 *.heic
 !03-marque/**/*.png
+# Les icônes d'installation sont du produit, pas des captures de test.
+!docs/*.png

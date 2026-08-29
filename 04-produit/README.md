@@ -1,11 +1,7 @@
 # 04 — Le produit (étapes 5 et 6)
 
-**`index.html`** — la PWA, un seul fichier, zéro dépendance, zéro requête réseau (le fond de
-carte éventuel est à arbitrer, pas à supposer) : appareil photo, géolocalisation avec saisie
-manuelle en secours, identification de la borne confirmée par l'utilisateur, sélection du
-destinataire dans la base embarquée, message horodaté, ouverture de la messagerie de
-l'utilisateur avec tout prérempli. Autotests embarqués sur la construction du message et la
-sélection du destinataire.
+**L'application est dans [`docs/`](../docs/)**, à la racine du site — c'est de là que
+GitHub Pages la sert. Elle n'est plus dans ce dossier.
 
 **`notes-produit.md`** — les arbitrages techniques et ce qui a été testé, notamment le parcours
 d'ajout de la photo : `mailto:` ne peut pas joindre de pièce jointe, l'utilisateur doit le faire
