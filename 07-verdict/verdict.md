@@ -37,6 +37,7 @@ faites.
 
 | # | Condition | Coût | Qui |
 |---|---|---|---|
+| C0 | **Ouvrir l'appli une fois sur le terrain** et lire l'écran Diagnostic : les deux API répondent-elles, et les noms de champs sont-ils les bons ? | 5 min, 0 € | Le fondateur, à Ceyreste |
 | C1 | **Vérifications V1 à V6** : lire sur Légifrance R417-10, R417-11, 429 CPP, L325-1 et le décret du 23 octobre 2019 | 30 min, 0 € | Un humain avec un navigateur |
 | C2 | **Vérification V11** : interroger l'API Annuaire de la DILA et lire le schéma — champ courriel présent ? téléphone partout ? | 20 min, 0 € | idem |
 | C2bis | **Vérifications V7 et V8** : colonnes des CSV data.gouv ; site de 5 communes | 1 h, 0 € | idem |
@@ -75,7 +76,7 @@ Cochée ligne à ligne sur l'état réel du dépôt, pas sur l'intention.
 | ✅ | Étape 2 : synthèse des canaux, recommandation argumentée | `angle.md`. Décision fondateur **en attente** |
 | ✅ | `02-plan/plan.md` : utilisateur, parcours, modèle, ce que le service n'est pas | Écrit |
 | ⬜ | Étape 4 : nom, vérifications INPI / domaine / handles | **Non faite.** Vérifications impossibles sans accès web ; et ce GO l'interdit |
-| ✅ | Étape 5 : PWA un fichier, autotests | `index.html` v2, 36 ko, 33 autotests, 0 échec — 2 écrans, GPS automatique, recherche locale du service le plus proche, caméra en direct, partage natif |
+| ✅ | Étape 5 : PWA un fichier, autotests | `index.html` v3, 42 ko, 34 autotests, 0 échec — 3 gestes, adresse et service compétent résolus en direct par les API publiques, caméra, partage natif |
 | ✅ | Étape 6 : message type, formulations à risque listées | `message-type.md`. **Volontairement amputé** de toute référence juridique |
 | 🟡 | Étape 7 : test terrain | Protocole écrit, mesures **bloquées jusqu'au GO** — c'est-à-dire jusqu'à maintenant |
 | ✅ | Étape 8 : red team | 9 attaques, 4 correctifs appliqués pendant la séance |

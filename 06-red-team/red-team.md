@@ -50,7 +50,16 @@ qui la tient**, pas un bénévole. A2 ne tombe pas complètement — il reste à
 les bons champs (V11) et qu'elle désigne le bon service pour un stationnement — mais elle passe
 de « tueur du projet » à « dépendance à vérifier ».
 
-**Gravité : ramenée de maximale à moyenne**, sous réserve de V11.
+**Seconde mise à jour, le même jour : l'attaque est morte.** Le fondateur a autorisé les
+requêtes réseau. L'appli n'embarque donc plus aucune base : elle interroge l'annuaire de la DILA
+**au moment du signalement**. Il n'y a plus rien à maintenir, plus rien à périmer. A2 ne décrit
+plus le produit.
+
+Ce que l'attaque devient, et qui est moins grave : une **dépendance de disponibilité**. Si
+l'API tombe ou change de schéma, l'appli ne trouve plus de destinataire — elle le dit et bascule
+sur la saisie manuelle, mais elle perd son intérêt. À surveiller, pas à craindre.
+
+**Gravité : de maximale à faible.**
 **Ce qui l'atténue, imparfaitement :** dater chaque entrée dans le produit et **faire expirer
 automatiquement** un canal non revérifié depuis douze mois, en basculant sur le parcours
 dégradé. Moins satisfaisant, mais honnête. À implémenter avant tout GO.
@@ -174,7 +183,7 @@ Leçon RendsMoi : le compte annoncé doit être le compte exécutable. Vérifica
 |---|---|---|
 | « 25 autotests » (avant correctifs) | 25 à l'audit, **28** après les correctifs A4 et A5 | ✅ chiffre mis à jour partout |
 | « 0 échec » | exécution Chromium du 29/08/2026 | ✅ exact |
-| « 33 ko » | exact à l'audit ; **36 ko** en v2 | ✅ chiffre mis à jour |
+| « 33 ko » | exact à l'audit ; **42 ko** en v3 | ✅ chiffre mis à jour |
 | « un seul fichier, aucune dépendance » | aucun `src`/`link` externe, autotest à l'appui | ✅ exact |
 | « aucune donnée ne quitte ce navigateur » | faux — le constat en sort | ❌ **corrigé** |
 | « aucune donnée côté serveur » | l'hébergeur journalise les IP | ❌ **à corriger** (A3) |

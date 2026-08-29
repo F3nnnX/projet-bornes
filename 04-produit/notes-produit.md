@@ -1,6 +1,6 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 36 ko, un seul fichier, aucune dépendance.
+Prototype `index.html`, 42 ko, un seul fichier, aucune dépendance installée.
 **Version 2 du 29 août 2026**, refondue sur cahier des charges du fondateur : parcours ramené à
 deux écrans, géolocalisation dès l'ouverture, recherche du service compétent en arrière-plan,
 appareil photo en direct, partage natif pour joindre réellement la photo.
@@ -11,7 +11,7 @@ appareil photo en direct, partage natif pour joindre réellement la photo.
 
 Chromium via Playwright, `file://`, 390 px et 1100 px, le 29 août 2026.
 
-- **33 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
+- **34 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
 - **Parcours complet joué** : accueil → photo → lieu → situation → envoi, dans les deux cas
   (commune connue, commune inconnue).
 - **Aucune erreur console.**
@@ -54,6 +54,92 @@ tombera le jour où quelqu'un ajoutera un CDN — c'est exactement son rôle.
 ---
 
 ## Arbitrages
+
+## v3 — ce qui a changé le 29 août au soir
+
+Le fondateur a levé le garde-fou « zéro requête réseau ». Ça change la nature du produit.
+
+### Les deux API remplacent la base embarquée
+
+`api-adresse.data.gouv.fr/reverse` convertit les coordonnées en adresse et en code INSEE.
+`api-lannuaire.service-public.fr` donne les services de cette commune. Les deux sont publiques,
+gratuites, sans compte.
+
+**Ce qu'on y gagne** : il n'y a plus de base à remplir ni à maintenir. L'objection A2 de la red
+team — personne ne tiendra la base — ne décrit plus le produit.
+
+**Ce qu'on y perd, et qu'il faut écrire** : la position de l'utilisateur est transmise à un
+tiers. C'est une administration française, ce qui est à peu près le tiers le moins inquiétant
+possible, mais ce n'est plus « rien ne sort du navigateur ». L'écran « à propos » le dit en
+clair, avec les deux noms de domaine.
+
+Tout échec dégrade proprement : délai maximal de 6 secondes par appel, puis coordonnées brutes
+et saisie manuelle. L'appli reste utilisable dans un parking souterrain.
+
+### ⚠ Le contrat des deux API n'est pas vérifié
+
+L'environnement de développement bloque tout accès réseau : **aucun des deux appels n'a pu être
+exécuté pour de vrai.** Les charges utiles des tests sont réalistes, pas authentiques.
+
+Deux précautions plutôt qu'un pari :
+
+1. **La lecture cherche à la mine.** `extraireCourriel()` regarde d'abord les noms de champs
+   probables, puis, s'il ne trouve rien, cherche une adresse électronique dans tout
+   l'enregistrement sérialisé. Même chose pour le téléphone. Le classement du type de service se
+   fait par mots-clés dans l'enregistrement entier, pas sur un champ précis.
+2. **Un écran Diagnostic**, en pied de page, montre l'URL appelée et la réponse brute. C'est lui
+   qui permettra de corriger les noms de champs au premier essai sur le terrain, sans deviner.
+
+C'est la première chose à faire à Ceyreste : ouvrir l'appli, aller dans Diagnostic, lire.
+
+### Le parcours tient en trois gestes
+
+Ouvrir, photographier, valider. La géolocalisation, le géocodage inverse et la recherche du
+service tournent **pendant que l'utilisateur cadre sa photo** : quand il arrive sur le résumé,
+tout est déjà rempli. C'est ce qui permet de tenir la promesse des trente secondes sans rien
+sacrifier de la précision.
+
+Le déclencheur de l'appareil photo mène directement au résumé — il n'y a plus de bouton
+« continuer » à toucher après la prise de vue.
+
+### L'ordre de préférence des services
+
+`PREFERENCE = ['commissariat', 'gendarmerie', 'police_municipale', 'mairie']`, parce que le
+fondateur a demandé le commissariat. **C'est discutable** : la police municipale est
+l'interlocutrice habituelle du stationnement, et dans une petite commune elle répondra plus vite
+qu'un commissariat d'arrondissement. Inverser les deux premières lignes suffit à changer d'avis
+— la constante est là pour ça. Les autres services restent accessibles en un geste sous
+« Autre destinataire ».
+
+### L'identité de l'expéditeur est en dur
+
+`EXPEDITEUR = { nom: 'Félix Casellato', tel: '06 24 99 47 40' }`. Usage strictement personnel :
+deux champs de moins à remplir, et plus aucun gabarit entre crochets qui risque de partir tel
+quel. **Conséquence à ne pas oublier** : si l'appli est un jour partagée ou mise en ligne
+publiquement, ces deux lignes partent avec — il faudra les remplacer par des champs avant toute
+diffusion.
+
+### L'analyse de la photo par IA : écartée, et pourquoi
+
+Demandée par le fondateur, non réalisable en l'état. Les quatre chemins possibles, avec leur
+coût réel :
+
+| Chemin | Ce qui bloque |
+|---|---|
+| API de vision (Claude, GPT, Gemini) | La clé serait en clair dans le fichier — donc utilisable par n'importe qui. Il faudrait un serveur relais pour la cacher : fin du « zéro serveur », et un abonnement à payer. |
+| OCR embarqué (Tesseract.js) | ~2 Mo de dépendance distante, et une fiabilité médiocre sur une plaque photographiée de biais, dans l'ombre, à contre-jour. Une plaque mal lue est pire qu'une plaque absente. |
+| API de vision du navigateur | L'API de détection de texte n'a jamais été déployée largement ; celle de Chrome est expérimentale et sous drapeau. |
+| Saisie manuelle | Trois champs sur l'écran de résumé, une dizaine de secondes. **Retenu.** |
+
+La plaque saisie est normalisée au format français `AB-123-CD`, sans jamais forcer une plaque
+étrangère ou d'ancien format — deux autotests le vérifient.
+
+Si l'OCR redevient une priorité après le test terrain, le chemin le moins mauvais est un relais
+minimal — une fonction serverless gratuite jusqu'à un certain volume — plus une API de vision
+facturée à l'usage. Ordre de grandeur : quelques centimes par signalement. C'est une décision
+fondateur, parce que ça engage une dépense récurrente et un serveur.
+
+## Arbitrages de la v2, toujours valables
 
 ### Le parcours est passé de six écrans à deux
 

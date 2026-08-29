@@ -23,7 +23,7 @@ projet, ce README n'en est que le suivi.
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
 | 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v2**, 33 autotests au vert — 2 écrans, GPS auto, caméra en direct, partage natif |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v3**, 34 autotests au vert — 3 gestes, adresse et destinataire trouvés en direct |
 | 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ **validé par le fondateur** le 29/08/2026, repris mot pour mot dans le produit |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
 | 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
@@ -94,7 +94,10 @@ Le travail avance seul ; ces décisions seules l'arrêtent.
 | Rôle du site | 0 | ✅ vitrine + PWA (voir « Le site » ci-dessous) |
 | Mail ou téléphone | — | ✅ **courriel d'abord, téléphone en repli** quand aucune adresse n'est connue |
 | Immatriculation dans le message | — | ✅ **autorisée** le 29/08/2026 — lève le garde-fou n°4 dans sa rédaction absolue |
-| Longueur du parcours | — | ✅ **2 écrans** ; les 4 questions de situation supprimées |
+| Longueur du parcours | — | ✅ **3 gestes** : ouvrir, photographier, valider |
+| Requêtes réseau | — | ✅ **autorisées** le 29/08/2026 — lève le garde-fou « zéro réseau » |
+| Signature de l'expéditeur | — | ✅ **en dur** dans le code : usage strictement personnel |
+| Analyse de la photo par IA | — | ❌ **écartée** — clé d'API exposée et service payant |
 | L'angle : à qui on écrit | 2 | ⬜ en attente de l'étape 1 |
 | Le nom du service | 4 | ⬜ |
 | Le modèle : gratuit citoyen ou financé | 3 | ⬜ |
@@ -117,7 +120,15 @@ Ils ne se négocient pas en cours de route. Version complète dans le prompt-ma�
    disparaît au rechargement ; l'envoi part de la messagerie de l'utilisateur, sous sa
    responsabilité. **L'appli est un stylo, pas un fichier.**
 
-   *Modifié le 29/08/2026.* La rédaction d'origine interdisait toute plaque et toute photo. Le
+   *Modifié le 29/08/2026, deux fois.* **Le « zéro requête réseau » est levé** : l'appli
+   interroge `api-adresse.data.gouv.fr` pour convertir les coordonnées en adresse, et
+   `api-lannuaire.service-public.fr` pour trouver le service compétent. La position de
+   l'utilisateur est donc transmise à un tiers — une administration française, mais un tiers.
+   En échange, il n'y a plus de base de contacts à maintenir : c'est l'objection la plus grave
+   de la red team qui disparaît. Tout échec réseau dégrade proprement, et l'appli reste
+   utilisable dans un parking sans réseau.
+
+   La rédaction d'origine interdisait aussi toute plaque et toute photo. Le
    fondateur a levé cette interdiction : l'immatriculation est saisissable, facultative, jamais
    préremplie, jamais conservée, et la photo est jointe par le partage natif. Rien n'étant
    stocké, il n'y a toujours pas de fichier — ce qui était le fond de la règle. Une nuance
