@@ -25,7 +25,8 @@ Voici les informations constatées :
 
 * Date et heure : {date} à {heure}
 * Adresse précise : {adresse, ou coordonnées relevées}
-* Véhicule constaté : {marque, modèle, couleur} – Immatriculation : {plaque}
+
+Une photographie de la situation est jointe à ce message.
 
 Je vous transmets ces éléments afin qu'un agent puisse, s'il le juge
 utile, venir l'apprécier sur place.
@@ -48,7 +49,20 @@ Bien cordialement,
 | Immatriculation | Facultative, passée en majuscules, jamais préremplie, jamais conservée |
 | Nom et téléphone | Si vides, les gabarits `[Prénom Nom]` et `[Numéro de téléphone]` restent, **et un avertissement rouge s'affiche** : mieux vaut voir l'oubli que l'envoyer |
 
-## Décision fondateur du 29 août 2026 — l'immatriculation
+## Décision fondateur du 29 août 2026, au soir — le véhicule n'est plus décrit
+
+La ligne « véhicule constaté » a été **supprimée**, et avec elle les champs immatriculation,
+marque et couleur. Motif du fondateur : sans reconnaissance automatique de la plaque, la saisie
+manuelle coûte trois champs pour un gain incertain, et l'appli doit tenir en trois gestes.
+
+**La photo la remplace, et elle est désormais obligatoire.** Elle montre le véhicule, sa
+couleur, son modèle et sa plaque mieux qu'un champ de saisie — et sans risque de faute de
+frappe sur une immatriculation, qui aurait désigné le mauvais véhicule.
+
+Ce qui suit garde une valeur documentaire : c'est la trace de la décision précédente, prise le
+matin même et renversée le soir.
+
+## Décision fondateur du 29 août 2026, au matin — l'immatriculation
 
 Le garde-fou n°4 du brief disait « aucune plaque, jamais ». **Le fondateur l'a levé**, avec ce
 motif : donner la plaque et une photo fait gagner du temps à l'agent.

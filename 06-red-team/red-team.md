@@ -183,7 +183,7 @@ Leçon RendsMoi : le compte annoncé doit être le compte exécutable. Vérifica
 |---|---|---|
 | « 25 autotests » (avant correctifs) | 25 à l'audit, **28** après les correctifs A4 et A5 | ✅ chiffre mis à jour partout |
 | « 0 échec » | exécution Chromium du 29/08/2026 | ✅ exact |
-| « 33 ko » | exact à l'audit ; **42 ko** en v3 | ✅ chiffre mis à jour |
+| « 33 ko » | exact à l'audit ; **45 ko** en v4 | ✅ chiffre mis à jour |
 | « un seul fichier, aucune dépendance » | aucun `src`/`link` externe, autotest à l'appui | ✅ exact |
 | « aucune donnée ne quitte ce navigateur » | faux — le constat en sort | ❌ **corrigé** |
 | « aucune donnée côté serveur » | l'hébergeur journalise les IP | ❌ **à corriger** (A3) |

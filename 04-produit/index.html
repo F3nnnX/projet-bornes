@@ -66,7 +66,6 @@ p{margin:0 0 .8rem}
 label{display:block;font-weight:600;margin:0 0 .25rem;font-size:.88rem}
 input[type=text],textarea{width:100%;padding:.7rem;border:1px solid var(--trait);
   border-radius:10px;background:var(--fond);color:var(--texte);font:inherit;margin:0 0 .6rem}
-#champ-plaque{text-transform:uppercase;font-weight:600;letter-spacing:.04em}
 textarea{min-height:12rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:.78rem;line-height:1.55}
 .duo{display:flex;gap:.55rem}
@@ -97,7 +96,7 @@ footer{max-width:34rem;margin:1.5rem auto 0;padding:1rem 1rem 2rem;font-size:.8r
 <section id="ecran-accueil" class="ecran actif">
   <h1>Borne bloquée</h1>
   <p class="doux">Une photo, un coup d'œil, c'est parti.</p>
-  <button class="bouton geant" id="btn-commencer">Signaler</button>
+  <button class="bouton geant" id="btn-commencer">Signaler et prendre une photo</button>
   <p class="etat"><span class="pastille" id="voyant"></span><span id="etat-position">Position non relevée</span></p>
   <button class="bouton secondaire" id="btn-a-propos">Ce que fait cette appli</button>
 </section>
@@ -135,14 +134,16 @@ footer{max-width:34rem;margin:1.5rem auto 0;padding:1rem 1rem 2rem;font-size:.8r
     <label for="champ-photo">Prendre ou choisir une photo</label>
     <input type="file" id="champ-photo" accept="image/*" capture="environment">
   </div>
-  <p class="etat" id="etat-photo">Aucune photo.</p>
+  <p class="etat" id="etat-photo">La photo est obligatoire : c'est la pièce du signalement.</p>
   <button class="bouton" id="btn-photo-suite" hidden>Continuer</button>
-  <button class="bouton secondaire" id="btn-photo-passer">Continuer sans photo</button>
+  <button class="bouton secondaire" data-retour="accueil">Annuler</button>
 </section>
 
 <!-- ─── 3. RÉSUMÉ ET ENVOI ─── -->
 <section id="ecran-resume" class="ecran">
   <h2>Vérifiez, puis envoyez</h2>
+
+  <img id="apercu-resume" class="apercu" alt="Photo prise à l'instant" hidden>
 
   <div class="carte">
     <h3 style="margin-top:0">Où</h3>
@@ -156,30 +157,27 @@ footer{max-width:34rem;margin:1.5rem auto 0;padding:1rem 1rem 2rem;font-size:.8r
     <div id="resume-service"></div>
   </div>
 
-  <div class="carte">
-    <h3 style="margin-top:0">Le véhicule</h3>
-    <label for="champ-plaque">Immatriculation</label>
-    <input type="text" id="champ-plaque" placeholder="AB-123-CD" autocomplete="off"
-           autocapitalize="characters" spellcheck="false" inputmode="text">
-    <div class="duo">
-      <div>
-        <label for="champ-marque">Marque et modèle</label>
-        <input type="text" id="champ-marque" placeholder="Renault Clio" autocomplete="off">
-      </div>
-      <div>
-        <label for="champ-couleur">Couleur</label>
-        <input type="text" id="champ-couleur" placeholder="grise" autocomplete="off">
-      </div>
+  <div class="carte" id="bloc-signature">
+    <h3 style="margin-top:0">Votre signature</h3>
+    <div id="signature-posee" hidden>
+      <p class="etat" id="signature-resume"></p>
+      <button class="bouton secondaire" id="btn-modifier-signature">Modifier</button>
     </div>
-    <p class="etat">Facultatifs — ils font gagner du temps à l'agent. Rien n'est conservé.</p>
+    <div id="signature-saisie">
+      <p class="etat">Saisie une seule fois. Elle reste sur ce téléphone et n'est envoyée nulle
+      part — elle ne figure pas dans le code de l'application.</p>
+      <label for="champ-nom">Prénom et nom</label>
+      <input type="text" id="champ-nom" placeholder="Prénom Nom" autocomplete="name">
+      <label for="champ-tel">Téléphone</label>
+      <input type="text" id="champ-tel" placeholder="06 12 34 56 78" autocomplete="tel" inputmode="tel">
+      <button class="bouton secondaire" id="btn-garder-signature">Mémoriser</button>
+    </div>
   </div>
 
-  <div id="bloc-actions"></div>
+  <h3>Le message</h3>
+  <textarea id="champ-message" spellcheck="true"></textarea>
 
-  <details>
-    <summary>Relire ou modifier le message</summary>
-    <textarea id="champ-message" spellcheck="true"></textarea>
-  </details>
+  <div id="bloc-actions"></div>
   <button class="bouton secondaire" data-retour="accueil">Recommencer</button>
 </section>
 
@@ -215,9 +213,32 @@ footer{max-width:34rem;margin:1.5rem auto 0;padding:1rem 1rem 2rem;font-size:.8r
    CONSTANTES
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Usage personnel : la signature est en dur, décision du fondateur du
-   29/08/2026. Elle n'est ni saisie, ni stockée — elle fait partie du code. */
-const EXPEDITEUR = { nom: 'Félix Casellato', tel: '06 24 99 47 40' };
+/* La signature est saisie une fois et mémorisée SUR L'APPAREIL, pas
+   écrite dans le code. Deux raisons, et la seconde est la vraie : elle
+   évite de retaper son nom à chaque signalement, et elle permet au dépôt
+   d'être public sans y publier un nom et un numéro de portable.
+
+   C'est la seule chose que cette application stocke. Le garde-fou n°4
+   visait les données de tiers ; il s'agit ici des siennes propres, sur
+   son propre téléphone, et rien ne sort du navigateur. Un autotest
+   vérifie qu'aucune autre clé n'est écrite. */
+const CLE_SIGNATURE = 'bornes.expediteur';
+
+function chargerExpediteur(){
+  try {
+    const brut = localStorage.getItem(CLE_SIGNATURE);
+    if (!brut) return null;
+    const o = JSON.parse(brut);
+    return (o && o.nom) ? { nom: String(o.nom), tel: String(o.tel || '') } : null;
+  } catch (e) { return null; }   /* navigation privée, stockage refusé */
+}
+
+function enregistrerExpediteur(nom, tel){
+  const o = { nom: String(nom || '').trim(), tel: String(tel || '').trim() };
+  if (!o.nom) return null;
+  try { localStorage.setItem(CLE_SIGNATURE, JSON.stringify(o)); } catch (e) {}
+  return o;
+}
 
 const OBJET = 'Signalement – Véhicule stationné sans recharge sur borne électrique';
 
@@ -236,8 +257,7 @@ const DELAI_RESEAU_MS = 6000;
 const etat = {
   photo: null, lat: null, lon: null, precision: null,
   adresse: '', commune: '', codeInsee: '', codePostal: '',
-  plaque: '', marque: '', couleur: '',
-  horodatage: null, service: null, alternatives: []
+  expediteur: null, horodatage: null, service: null, alternatives: []
 };
 
 const journal = [];
@@ -262,15 +282,6 @@ function numeroUtilisable(n){
 }
 function lienTel(n){
   return numeroUtilisable(n) ? 'tel:' + String(n).replace(/[^0-9+]/g, '') : null;
-}
-
-/* Les plaques françaises s'écrivent AB-123-CD. On normalise ce que
-   l'utilisateur tape, sans jamais le corriger de force : s'il saisit autre
-   chose (plaque étrangère, ancien format), on garde tel quel en majuscules. */
-function normaliserPlaque(s){
-  const brut = String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const fr = brut.match(/^([A-Z]{2})(\d{3})([A-Z]{2})$/);
-  return fr ? fr[1] + '-' + fr[2] + '-' + fr[3] : String(s || '').toUpperCase().trim();
 }
 
 function noter(entree){
@@ -418,14 +429,6 @@ function decrireLieu(e){
   return '[Adresse complète / Emplacement de la borne]';
 }
 
-function decrireVehicule(e){
-  const morceaux = [];
-  const desc = [e.marque, e.couleur].filter(Boolean).join(' ');
-  if (desc) morceaux.push(desc);
-  if (e.plaque) morceaux.push('Immatriculation : ' + normaliserPlaque(e.plaque));
-  return morceaux.join(' – ');
-}
-
 function construireMessage(e){
   const d = e.horodatage instanceof Date ? e.horodatage : new Date();
   const l = [];
@@ -444,10 +447,10 @@ function construireMessage(e){
   l.push('');
   l.push('* Date et heure : ' + formaterDate(d) + ' à ' + formaterHeure(d));
   l.push('* Adresse précise : ' + decrireLieu(e));
-  /* La ligne « véhicule » ne s'écrit que si elle a un contenu : une ligne
-     vide dans un courrier administratif, c'est un courrier qui se classe. */
-  const veh = decrireVehicule(e);
-  if (veh) l.push('* Véhicule constaté : ' + veh);
+  l.push('');
+  /* La photo est obligatoire côté interface : l'annoncer permet au
+     destinataire de la chercher plutôt que de lire un courrier nu. */
+  l.push('Une photographie de la situation est jointe à ce message.');
   l.push('');
   l.push('Je vous transmets ces éléments afin qu\'un agent puisse, s\'il le juge');
   l.push('utile, venir l\'apprécier sur place.');
@@ -456,8 +459,9 @@ function construireMessage(e){
   l.push('');
   l.push('Bien cordialement,');
   l.push('');
-  l.push(EXPEDITEUR.nom);
-  l.push(EXPEDITEUR.tel);
+  const sig = e.expediteur || chargerExpediteur();
+  l.push(sig && sig.nom ? sig.nom : '[Prénom Nom]');
+  l.push(sig && sig.tel ? sig.tel : '[Numéro de téléphone]');
   return { objet: versTexteBrut(OBJET), corps: versTexteBrut(l.join('\n')) };
 }
 
@@ -468,7 +472,6 @@ function construireScriptTelephone(e){
   l.push('Je suis ' + decrireLieu(e) + '.');
   l.push('Un véhicule occupe un emplacement de recharge sans être raccordé à la borne,');
   l.push('et il n\'y a pas d\'autre point de charge libre ici.');
-  if (e.plaque) l.push('La plaque est ' + normaliserPlaque(e.plaque) + '.');
   l.push('Il est ' + formaterHeure(d) + '. Je vous laisse en juger.');
   return versTexteBrut(l.join('\n'));
 }
@@ -596,11 +599,18 @@ function ligneService(s){
   return '<strong>' + s.nom + '</strong><p class="doux">' + canal + '</p>';
 }
 
+function afficherSignature(){
+  const sig = etat.expediteur;
+  document.getElementById('signature-posee').hidden = !sig;
+  document.getElementById('signature-saisie').hidden = !!sig;
+  if (sig) {
+    document.getElementById('signature-resume').textContent =
+      sig.nom + (sig.tel ? ' · ' + sig.tel : ' · téléphone non renseigné');
+  }
+}
+
 function rafraichirResume(){
   etat.adresse = document.getElementById('champ-adresse').value.trim() || etat.adresse;
-  etat.plaque  = document.getElementById('champ-plaque').value.trim();
-  etat.marque  = document.getElementById('champ-marque').value.trim();
-  etat.couleur = document.getElementById('champ-couleur').value.trim();
 
   document.getElementById('resume-lieu').textContent = (etat.lat != null)
     ? 'GPS ' + etat.lat.toFixed(5) + ', ' + etat.lon.toFixed(5)
@@ -634,6 +644,10 @@ function rafraichirResume(){
       + 'copiez-le et adressez-le au commissariat ou à la mairie.</div>';
   }
 
+  const apercu = document.getElementById('apercu-resume');
+  if (etat.photo) { apercu.src = URL.createObjectURL(etat.photo); apercu.hidden = false; }
+
+  afficherSignature();
   const m = construireMessage(etat);
   document.getElementById('champ-message').value = m.corps;
   construireActions(m);
@@ -647,6 +661,12 @@ function construireActions(m){
 
   const partageable = etat.photo && navigator.canShare
     && navigator.canShare({ files: [etat.photo] });
+
+  if (!etat.expediteur) {
+    zone.insertAdjacentHTML('beforeend',
+      '<div class="avert"><strong>Mémorisez votre signature d\'abord.</strong> Sans elle, le '
+      + 'message part avec des mentions entre crochets.</div>');
+  }
 
   if (partageable) {
     const b = document.createElement('button');
@@ -675,9 +695,14 @@ function construireActions(m){
     a.href = lienMailto(courriel, m.objet, corps);
     a.textContent = 'Ouvrir ma messagerie';
     zone.appendChild(a);
-    if (etat.photo && !partageable) {
+    if (!partageable) {
+      /* Le partage natif est le seul chemin qui joigne la photo. Sans lui,
+         l'utilisateur doit le faire — et la photo est obligatoire, donc on
+         le dit fort plutôt que discrètement. */
       zone.insertAdjacentHTML('beforeend',
-        '<p class="etat">Pensez à joindre la photo : c\'est la dernière image de la galerie.</p>');
+        '<div class="avert"><strong>Joignez la photo à la main.</strong> Ce navigateur ne sait '
+        + 'pas la transmettre tout seul. C\'est la dernière image de votre galerie, et le '
+        + 'signalement ne vaut rien sans elle.</div>');
     }
   } else if (etat.service && numeroUtilisable(etat.service.telephone)) {
     zone.insertAdjacentHTML('beforeend',
@@ -712,11 +737,20 @@ function construireActions(m){
   zone.appendChild(copier);
 }
 
-['champ-adresse','champ-plaque','champ-marque','champ-couleur'].forEach(function(id){
-  document.getElementById(id).addEventListener('input', rafraichirResume);
+document.getElementById('champ-adresse').addEventListener('input', rafraichirResume);
+
+document.getElementById('btn-garder-signature').addEventListener('click', function(){
+  const sig = enregistrerExpediteur(document.getElementById('champ-nom').value,
+                                    document.getElementById('champ-tel').value);
+  if (!sig) { document.getElementById('champ-nom').focus(); return; }
+  etat.expediteur = sig;
+  rafraichirResume();
 });
-document.getElementById('champ-plaque').addEventListener('blur', function(){
-  this.value = normaliserPlaque(this.value); rafraichirResume();
+document.getElementById('btn-modifier-signature').addEventListener('click', function(){
+  document.getElementById('champ-nom').value = etat.expediteur ? etat.expediteur.nom : '';
+  document.getElementById('champ-tel').value = etat.expediteur ? etat.expediteur.tel : '';
+  etat.expediteur = null;
+  rafraichirResume();
 });
 
 /* ─── Boutons ─── */
@@ -728,7 +762,6 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
 });
 document.getElementById('btn-a-propos').addEventListener('click', function(){ montrer('apropos'); });
 document.getElementById('btn-photo-suite').addEventListener('click', allerAuResume);
-document.getElementById('btn-photo-passer').addEventListener('click', allerAuResume);
 document.querySelectorAll('[data-retour]').forEach(function(b){
   b.addEventListener('click', function(){ fermerCamera(); montrer(b.getAttribute('data-retour')); });
 });
@@ -739,6 +772,7 @@ document.getElementById('lien-tests').addEventListener('click', function(ev){
   ev.preventDefault(); lancerTests(); montrer('tests');
 });
 
+etat.expediteur = chargerExpediteur();
 preparerEnArrierePlan();
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -757,7 +791,7 @@ function lancerTests(){
     lat: 43.1975, lon: 5.6250, precision: 8,
     adresse: 'Avenue du Général de Gaulle, 13600 Ceyreste', commune: 'Ceyreste',
     codeInsee: '13024', codePostal: '13600',
-    plaque: '', marque: '', couleur: '',
+    expediteur: { nom: 'Félix Casellato', tel: '06 24 99 47 40' },
     horodatage: new Date(2026, 7, 29, 14, 5)
   };
   const m = construireMessage(base);
@@ -765,28 +799,29 @@ function lancerTests(){
   v('Le message se construit', !!(m.corps && m.objet));
   v('L\'objet est celui validé par le fondateur',
     m.objet === 'Signalement – Véhicule stationné sans recharge sur borne électrique');
-  v('La signature est en dur, sans gabarit',
+  v('La signature mémorisée est reprise, sans gabarit',
     m.corps.indexOf('Félix Casellato') !== -1 && m.corps.indexOf('06 24 99 47 40') !== -1
     && m.corps.indexOf('[') === -1);
+  v('Sans signature, les gabarits restent visibles',
+    construireMessage(Object.assign({}, base, { expediteur: null })).corps
+      .indexOf('[Prénom Nom]') !== -1, 'pour que l\'oubli se voie');
   v('Le message porte la date et l\'heure', m.corps.indexOf('29/08/2026 à 14h05') !== -1);
   v('Le message porte l\'adresse trouvée', m.corps.indexOf('13600 Ceyreste') !== -1);
-  v('Sans véhicule saisi, aucune ligne véhicule',
-    m.corps.indexOf('Véhicule constaté') === -1,
-    'une ligne vide fait classer le courrier');
+  v('Le message ne décrit aucun véhicule',
+    m.corps.indexOf('Véhicule constaté') === -1 && m.corps.indexOf('Immatriculation') === -1,
+    'supprimé le 29/08 : sans OCR, la saisie ne valait pas le clic');
+  v('Aucune plaque ne peut apparaître, sous aucune forme',
+    !/immatricul|plaque|[A-Z]{2}-\d{3}-[A-Z]{2}/i.test(m.corps));
 
-  const mv = construireMessage(Object.assign({}, base,
-    { plaque: 'ab123cd', marque: 'Renault Clio', couleur: 'grise' }));
-  v('La plaque est normalisée au format français',
-    mv.corps.indexOf('Immatriculation : AB-123-CD') !== -1);
-  v('Marque et couleur sont réunies', mv.corps.indexOf('Renault Clio grise') !== -1);
-  v('Une plaque étrangère n\'est pas déformée', normaliserPlaque('b-mw 1234') === 'B-MW 1234');
-  v('Une plaque déjà formatée reste stable', normaliserPlaque('AB-123-CD') === 'AB-123-CD');
+  const mv = m;
 
   const mSansAdresse = construireMessage(Object.assign({}, base, { adresse: '' }));
   v('Sans adresse, les coordonnées prennent le relais',
     mSansAdresse.corps.indexOf('43.197500') !== -1);
   v('Le message ne porte aucun jugement',
     !/chauffard|incivil|irrespons|abusif|scandal/i.test(mv.corps));
+  v('La photo est annoncée comme jointe', m.corps.indexOf('photographie') !== -1,
+    'elle est obligatoire : le destinataire doit savoir la chercher');
   v('Aucune espace fine ne sort de l\'appli', !/[\u202F\u00A0]/.test(mv.corps + mv.objet));
   v('versTexteBrut remplace bien la fine', versTexteBrut('quoi\u202F?') === 'quoi ?');
 
@@ -852,9 +887,27 @@ function lancerTests(){
       if (/^(https?:)?\/\//i.test(u)) externes.push(u);
     });
   v('Aucune ressource externe n\'est chargée au démarrage', externes.length === 0, externes.join(', '));
-  v('Rien n\'est écrit dans le stockage du navigateur', (function(){
-      try { return localStorage.length === 0 && sessionStorage.length === 0; }
-      catch (e) { return true; } }()));
+  /* Une seule clé a le droit d'exister : la signature de l'utilisateur,
+     sur son propre appareil. Ce test tombe si quoi que ce soit d'autre
+     est écrit — un historique, un compteur, une position mémorisée. */
+  v('Seule la signature est stockée, rien d\'autre', (function(){
+      try {
+        const clefs = Object.keys(localStorage);
+        return sessionStorage.length === 0
+          && clefs.every(function(k){ return k === CLE_SIGNATURE; });
+      } catch (e) { return true; } }()), 'aucun historique, aucun compteur');
+  v('Une signature mémorisée se relit', (function(){
+      let avant = null;
+      try { avant = localStorage.getItem(CLE_SIGNATURE); } catch (e) {}
+      enregistrerExpediteur('Essai Test', '01 02 03 04 05');
+      const relu = chargerExpediteur();
+      try {
+        if (avant === null) localStorage.removeItem(CLE_SIGNATURE);
+        else localStorage.setItem(CLE_SIGNATURE, avant);
+      } catch (e) {}
+      return relu && relu.nom === 'Essai Test' && relu.tel === '01 02 03 04 05';
+    })());
+  v('Une signature sans nom est refusée', enregistrerExpediteur('   ', '06') === null);
 
   const liste = document.getElementById('resultats-tests');
   liste.innerHTML = t.map(function(r){
@@ -870,8 +923,9 @@ function lancerTests(){
 
 window.lancerTests = lancerTests;
 window.__bornes = { construireMessage, construireScriptTelephone, lireAdresse, lireServices,
-                    ordonner, extraireCourriel, extraireTelephone, classer, normaliserPlaque,
-                    lienTel, lienMailto, numeroUtilisable, versTexteBrut, etat, EXPEDITEUR };
+                    ordonner, extraireCourriel, extraireTelephone, classer, chargerExpediteur,
+                    enregistrerExpediteur, lienTel, lienMailto, numeroUtilisable,
+                    versTexteBrut, etat, CLE_SIGNATURE };
 
 if (location.hash === '#tests') { lancerTests(); montrer('tests'); }
 if (location.hash === '#diag') { montrer('diag'); }

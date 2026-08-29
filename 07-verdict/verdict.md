@@ -76,7 +76,7 @@ Cochée ligne à ligne sur l'état réel du dépôt, pas sur l'intention.
 | ✅ | Étape 2 : synthèse des canaux, recommandation argumentée | `angle.md`. Décision fondateur **en attente** |
 | ✅ | `02-plan/plan.md` : utilisateur, parcours, modèle, ce que le service n'est pas | Écrit |
 | ⬜ | Étape 4 : nom, vérifications INPI / domaine / handles | **Non faite.** Vérifications impossibles sans accès web ; et ce GO l'interdit |
-| ✅ | Étape 5 : PWA un fichier, autotests | `index.html` v3, 42 ko, 34 autotests, 0 échec — 3 gestes, adresse et service compétent résolus en direct par les API publiques, caméra, partage natif |
+| ✅ | Étape 5 : PWA un fichier, autotests | `index.html` v4, 45 ko, 35 autotests, 0 échec — 3 gestes, photo obligatoire, adresse et service compétent résolus en direct, signature mémorisée sur l'appareil |
 | ✅ | Étape 6 : message type, formulations à risque listées | `message-type.md`. **Volontairement amputé** de toute référence juridique |
 | 🟡 | Étape 7 : test terrain | Protocole écrit, mesures **bloquées jusqu'au GO** — c'est-à-dire jusqu'à maintenant |
 | ✅ | Étape 8 : red team | 9 attaques, 4 correctifs appliqués pendant la séance |

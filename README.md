@@ -23,7 +23,7 @@ projet, ce README n'en est que le suivi.
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
 | 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v3**, 34 autotests au vert — 3 gestes, adresse et destinataire trouvés en direct |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v4**, 35 autotests au vert — 3 gestes, photo obligatoire, signature mémorisée sur l'appareil |
 | 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ **validé par le fondateur** le 29/08/2026, repris mot pour mot dans le produit |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
 | 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
@@ -96,8 +96,11 @@ Le travail avance seul ; ces décisions seules l'arrêtent.
 | Immatriculation dans le message | — | ✅ **autorisée** le 29/08/2026 — lève le garde-fou n°4 dans sa rédaction absolue |
 | Longueur du parcours | — | ✅ **3 gestes** : ouvrir, photographier, valider |
 | Requêtes réseau | — | ✅ **autorisées** le 29/08/2026 — lève le garde-fou « zéro réseau » |
-| Signature de l'expéditeur | — | ✅ **en dur** dans le code : usage strictement personnel |
+
 | Analyse de la photo par IA | — | ❌ **écartée** — clé d'API exposée et service payant |
+| Description du véhicule | — | ❌ **supprimée** faute d'OCR : la photo la remplace |
+| Photo | — | ✅ **obligatoire** — c'est la pièce du signalement |
+| Signature | — | ✅ **mémorisée sur l'appareil**, plus dans le code : le dépôt peut être public |
 | L'angle : à qui on écrit | 2 | ⬜ en attente de l'étape 1 |
 | Le nom du service | 4 | ⬜ |
 | Le modèle : gratuit citoyen ou financé | 3 | ⬜ |

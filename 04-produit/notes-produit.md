@@ -1,6 +1,6 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 42 ko, un seul fichier, aucune dépendance installée.
+Prototype `index.html`, 45 ko, un seul fichier, aucune dépendance installée.
 **Version 2 du 29 août 2026**, refondue sur cahier des charges du fondateur : parcours ramené à
 deux écrans, géolocalisation dès l'ouverture, recherche du service compétent en arrière-plan,
 appareil photo en direct, partage natif pour joindre réellement la photo.
@@ -11,7 +11,7 @@ appareil photo en direct, partage natif pour joindre réellement la photo.
 
 Chromium via Playwright, `file://`, 390 px et 1100 px, le 29 août 2026.
 
-- **34 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
+- **35 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
 - **Parcours complet joué** : accueil → photo → lieu → situation → envoi, dans les deux cas
   (commune connue, commune inconnue).
 - **Aucune erreur console.**
@@ -138,6 +138,49 @@ Si l'OCR redevient une priorité après le test terrain, le chemin le moins mauv
 minimal — une fonction serverless gratuite jusqu'à un certain volume — plus une API de vision
 facturée à l'usage. Ordre de grandeur : quelques centimes par signalement. C'est une décision
 fondateur, parce que ça engage une dépense récurrente et un serveur.
+
+## v4 — trois gestes, une photo, une signature qui se souvient
+
+### La photo est obligatoire, et le partage natif est le seul chemin qui la joigne
+
+Le bouton « continuer sans photo » a disparu. Un signalement sans photo n'a pas de pièce, et le
+courrier l'annonce désormais : « Une photographie de la situation est jointe à ce message. »
+
+Là où `navigator.share` existe, la photo part vraiment. Là où il n'existe pas, l'appli affiche
+un **avertissement rouge** plutôt qu'une note discrète : le navigateur ne sait pas la
+transmettre, il faut la joindre à la main, et le signalement ne vaut rien sans elle.
+
+### La description du véhicule a été supprimée
+
+Trois champs — immatriculation, marque, couleur — retirés faute de reconnaissance automatique.
+Le raisonnement du fondateur tient : sans OCR, la saisie coûte trois champs pour un gain
+incertain, et **la photo montre déjà tout cela**, sans risque de faute de frappe sur une plaque
+— une erreur d'un caractère aurait désigné un autre véhicule.
+
+Effet secondaire non recherché mais bienvenu : l'appli ne demande plus aucune donnée
+personnelle concernant un tiers. Le débat de la matinée sur le garde-fou n°4 devient sans objet.
+
+### La signature vit sur l'appareil, plus dans le code
+
+`localStorage`, une clé, `bornes.expediteur`. Saisie une fois, retrouvée à chaque ouverture.
+
+C'est **la seule chose que cette application stocke**, et un autotest le garantit : il énumère
+les clés du stockage et échoue si une autre apparaît — historique, compteur, position mémorisée.
+
+Ce choix résout un problème qui n'était pas technique. La signature en dur obligeait à garder le
+dépôt privé, sous peine de publier un nom et un numéro de portable dans un fichier indexable.
+Sortie du code, elle ne part dans aucun dépôt : **le dépôt peut être public sans rien exposer**,
+et l'utilisateur ne retape rien.
+
+Deux cas dégradés traités : navigation privée ou stockage refusé, où la lecture échoue
+silencieusement et les gabarits entre crochets réapparaissent ; et signature vide, refusée à
+l'enregistrement.
+
+### Le parcours, dans son état final
+
+Ouvrir · toucher « Signaler et prendre une photo » · déclencher. Le déclencheur mène directement
+au résumé, où tout est déjà rempli : la photo en haut, l'adresse trouvée, le destinataire
+trouvé, la signature, le message en clair. Restent « Envoyer » et « Copier le message ».
 
 ## Arbitrages de la v2, toujours valables
 
