@@ -107,6 +107,20 @@ raccordé » sans avoir regardé — on perd l'information au lieu de la gagner.
 plus honnête : quand l'utilisateur n'a pas pu voir, le courrier s'intitule **« Signalement »** et
 non « Constat », et dit qu'il n'a pas pu observer d'assez près. Deux autotests le gardent.
 
+### ⚠ A4 et A5 : correctifs annulés le 29 août par décision fondateur
+
+Les deux garde-fous décrits ci-dessus **n'existent plus dans le produit**. Les questions qui les
+portaient ont été supprimées sur instruction du fondateur, au motif que celui qui écrit à la
+police a nécessairement constaté les trois faits.
+
+Le raisonnement se défend, et la vitesse gagnée est réelle. Mais l'attaque, elle, n'est pas
+réfutée : elle est **acceptée**. Le message affirme maintenant sans vérification que
+l'emplacement est réservé, que le véhicule n'est pas raccordé et qu'aucune autre borne n'est
+libre. En cas d'erreur, c'est l'expéditeur qui porte le fait faux, sous sa signature.
+
+À reprendre au test terrain : sur trois signalements réels, les trois affirmations étaient-elles
+exactes à chaque fois ?
+
 ## A6 — Le garde-fou anti-répétition est décoratif
 
 Il vit en mémoire vive et disparaît au rechargement de la page. **Recharger suffit à le
@@ -160,7 +174,7 @@ Leçon RendsMoi : le compte annoncé doit être le compte exécutable. Vérifica
 |---|---|---|
 | « 25 autotests » (avant correctifs) | 25 à l'audit, **28** après les correctifs A4 et A5 | ✅ chiffre mis à jour partout |
 | « 0 échec » | exécution Chromium du 29/08/2026 | ✅ exact |
-| « 33 ko » | exact à l'audit ; **39 ko** après les correctifs et le canal téléphone | ✅ chiffre mis à jour |
+| « 33 ko » | exact à l'audit ; **36 ko** en v2 | ✅ chiffre mis à jour |
 | « un seul fichier, aucune dépendance » | aucun `src`/`link` externe, autotest à l'appui | ✅ exact |
 | « aucune donnée ne quitte ce navigateur » | faux — le constat en sort | ❌ **corrigé** |
 | « aucune donnée côté serveur » | l'hébergeur journalise les IP | ❌ **à corriger** (A3) |

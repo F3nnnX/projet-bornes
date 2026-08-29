@@ -40,8 +40,11 @@ budget faux.
 À afficher dans le produit, pas seulement dans ce document.
 
 - **Ce n'est pas un outil de verbalisation.** Il ne peut pas faire verbaliser, et il le dit.
-- **Ce n'est pas un fichier de plaques.** Aucune plaque n'est demandée, saisie, lue ou stockée.
-  Le constat décrit une situation à un endroit et à une heure, pas un véhicule identifié.
+- **Ce n'est pas un fichier de plaques.** L'immatriculation peut être saisie — décision
+  fondateur du 29/08/2026, voir `04-produit/message-type.md` — mais elle est **facultative,
+  jamais préremplie, jamais conservée** : elle disparaît au rechargement, comme tout le reste.
+  Rien n'est stocké, donc il n'y a pas de fichier. C'était le fond de la règle ; sa rédaction
+  absolue est ce qui a changé.
 - **Ce n'est pas une milice.** Pas d'envoi en masse, pas de signalement répété automatique,
   pas d'historique, pas de partage social, pas de classement des « pires spots ».
 - **Ce n'est pas un réseau social.** Pas de compte, pas de profil, pas de communauté.

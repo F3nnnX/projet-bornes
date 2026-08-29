@@ -23,8 +23,8 @@ projet, ce README n'en est que le suivi.
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
 | 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 37 autotests au vert |
-| 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ livré **sans référence juridique** (non vérifiable) |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v2**, 33 autotests au vert — 2 écrans, GPS auto, caméra en direct, partage natif |
+| 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ **validé par le fondateur** le 29/08/2026, repris mot pour mot dans le produit |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
 | 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
 | 9 | Verdict | [`07-verdict/verdict.md`](07-verdict/verdict.md) | ✅ **GO conditionnel, limité à la phase 0** |
@@ -91,7 +91,10 @@ Le travail avance seul ; ces décisions seules l'arrêtent.
 | Décision | Étape | État |
 |---|---|---|
 | Nom du dépôt et visibilité | 0 | ✅ `projet-bornes`, **privé** jusqu'au GO |
-| Rôle du site | 0 | ✅ vitrine + PWA (voir « Le site » ci-dessous) |
+| Rôle du site | 0 | ✅ vitrine + PWA (voir « Le site » ci-dessous) |
+| Mail ou téléphone | — | ✅ **courriel d'abord, téléphone en repli** quand aucune adresse n'est connue |
+| Immatriculation dans le message | — | ✅ **autorisée** le 29/08/2026 — lève le garde-fou n°4 dans sa rédaction absolue |
+| Longueur du parcours | — | ✅ **2 écrans** ; les 4 questions de situation supprimées |
 | L'angle : à qui on écrit | 2 | ⬜ en attente de l'étape 1 |
 | Le nom du service | 4 | ⬜ |
 | Le modèle : gratuit citoyen ou financé | 3 | ⬜ |
@@ -109,10 +112,17 @@ Ils ne se négocient pas en cours de route. Version complète dans le prompt-ma�
    *C'est pourquoi ce dépôt est privé et GitHub Pages désactivé.*
 3. **Ne rien inventer.** Chaque affirmation est sourcée par une URL ouverte et lue, ou marquée
    `[hypothèse]` avec sa méthode de vérification. Jamais un article de loi cité de mémoire.
-4. **RGPD by design.** Une plaque d'immatriculation est une donnée personnelle. Aucune plaque,
-   aucune photo, aucune donnée stockée côté serveur. Pas de base, pas de compte, pas de mesure
-   d'audience. Tout se passe dans le navigateur ; l'envoi part de la messagerie de
-   l'utilisateur, sous sa responsabilité. **L'appli est un stylo, pas un fichier.**
+4. **RGPD by design.** Aucune donnée stockée : pas de base, pas de compte, pas de mesure
+   d'audience, pas de cookie, pas de requête réseau. Tout se passe dans le navigateur et
+   disparaît au rechargement ; l'envoi part de la messagerie de l'utilisateur, sous sa
+   responsabilité. **L'appli est un stylo, pas un fichier.**
+
+   *Modifié le 29/08/2026.* La rédaction d'origine interdisait toute plaque et toute photo. Le
+   fondateur a levé cette interdiction : l'immatriculation est saisissable, facultative, jamais
+   préremplie, jamais conservée, et la photo est jointe par le partage natif. Rien n'étant
+   stocké, il n'y a toujours pas de fichier — ce qui était le fond de la règle. Une nuance
+   imposée par la red team : **l'hébergeur, lui, journalise les connexions**, comme tout
+   hébergeur web. La formule « aucune donnée » est donc fausse et ne doit pas être employée.
 5. **Ton factuel, jamais accusatoire.** « Je constate », jamais « ce chauffard ». L'appli ne
    doit pas pouvoir devenir un outil de harcèlement : pas d'envoi en masse, pas d'historique de
    plaques, pas de partage social du cliché.

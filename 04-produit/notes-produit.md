@@ -1,6 +1,9 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 39 ko, un seul fichier, aucune dépendance.
+Prototype `index.html`, 36 ko, un seul fichier, aucune dépendance.
+**Version 2 du 29 août 2026**, refondue sur cahier des charges du fondateur : parcours ramené à
+deux écrans, géolocalisation dès l'ouverture, recherche du service compétent en arrière-plan,
+appareil photo en direct, partage natif pour joindre réellement la photo.
 
 ---
 
@@ -8,7 +11,7 @@ Prototype `index.html`, 39 ko, un seul fichier, aucune dépendance.
 
 Chromium via Playwright, `file://`, 390 px et 1100 px, le 29 août 2026.
 
-- **37 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
+- **33 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
 - **Parcours complet joué** : accueil → photo → lieu → situation → envoi, dans les deux cas
   (commune connue, commune inconnue).
 - **Aucune erreur console.**
@@ -52,7 +55,53 @@ tombera le jour où quelqu'un ajoutera un CDN — c'est exactement son rôle.
 
 ## Arbitrages
 
-### Le téléphone est le canal principal, l'e-mail la trace
+### Le parcours est passé de six écrans à deux
+
+Supprimés sur décision du fondateur : l'écran « lieu » — la position se relève toute seule dès
+l'ouverture — et les quatre questions de l'écran « situation ». Son raisonnement, qui se tient :
+si l'utilisateur écrit à la police, c'est que la place est réservée, que le véhicule n'est pas
+branché et qu'il n'y a pas d'autre borne libre. Sinon il ne l'aurait pas ouverte.
+
+**Ce que ça coûte, et qu'il faut avoir écrit quelque part** : le message affirme désormais ces
+trois faits sans que l'appli les ait demandés. En cas d'erreur — véhicule en charge terminée,
+emplacement non réservé — le courrier porte un fait faux sous la signature de l'utilisateur.
+Les garde-fous A4 et A5 ajoutés en red team disparaissent avec les questions. C'est un
+arbitrage vitesse contre prudence, tranché en faveur de la vitesse.
+
+### La recherche du service le plus proche est locale
+
+`chercherPlusProche()` calcule une distance de haversine entre la position relevée et chaque
+entrée de la base embarquée. Aucune requête : c'est ce qui permet de trouver le bon
+interlocuteur dans un parking souterrain sans réseau.
+
+Chaque entrée porte un **rayon de compétence**. Sans lui, « le plus proche » ne veut rien dire :
+un commissariat d'arrondissement à 40 km n'est pas le bon interlocuteur, il est simplement le
+moins loin. Hors rayon, la fonction ne renvoie rien et le parcours dégradé prend le relais.
+
+L'ordre de préférence est **courriel, puis téléphone, puis formulaire**. Le courriel porte la
+trace écrite et la photo ; le téléphone rattrape les services sans adresse connue.
+
+### La photo : appareil en direct, et partage natif pour la joindre
+
+Deux améliorations demandées, deux mécanismes.
+
+**La prise de vue.** `getUserMedia` ouvre une visée en direct dans la page avec un bouton
+déclencheur. Ça exige un contexte sécurisé : en `file://` ou en HTTP simple, il n'existe pas et
+l'appli retombe sur le champ fichier — qui ouvre quand même l'appareil photo natif sur mobile
+grâce à `capture="environment"`. Les deux chemins sont testés.
+
+**La pièce jointe.** `mailto:` ne transporte aucune pièce jointe, et l'API Gmail exigerait un
+compte, un serveur et OAuth — tout ce que ce projet refuse. Le bon chemin est le **partage
+natif** : `navigator.share({ files: [photo] })` ouvre le sélecteur d'applications d'Android ou
+d'iOS avec le texte **et la photo réellement attachée**, Gmail compris.
+
+Sa limite, affichée dans l'interface plutôt que cachée : **le partage ne peut pas préremplir le
+destinataire.** L'adresse est donc rappelée à l'écran, à copier. D'où les deux boutons plutôt
+qu'un : « Envoyer avec la photo » quand le partage existe, « Ouvrir ma messagerie » pour le
+destinataire prérempli sans pièce jointe. Aucun des deux ne fait tout ; le dire vaut mieux que
+de choisir à la place de l'utilisateur.
+
+### Le téléphone reste le canal de repli, l'e-mail le principal
 
 Ajouté le 29 août 2026, après la question du fondateur. Le but du service est qu'un agent vienne
 **pendant que le véhicule est encore là** : c'est un problème de latence, et une boîte générique

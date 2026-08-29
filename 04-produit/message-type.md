@@ -1,70 +1,90 @@
 # Étape 6 — Le message type
 
-**État : livré, mais amputé volontairement.** Le message ne cite **aucune référence
-réglementaire**, parce qu'aucune n'a pu être vérifiée sur sa source officielle (voir
-`01-recherche/recherche.md`, avertissement sur les sources). La phrase à ajouter une fois les
-vérifications V1 à V3 faites est donnée plus bas, prête à coller.
+**Validé par le fondateur le 29 août 2026.** Le texte ci-dessous est le sien, repris mot pour
+mot dans le produit. Un autotest vérifie que l'objet n'a pas dérivé.
 
 ---
 
 ## Le texte
 
-**Objet** — `Constat : emplacement de recharge occupé — {adresse}, le {date} à {heure}`
+**Objet** — `Signalement – Véhicule stationné sans recharge sur borne électrique`
 
 ```
-Madame, Monsieur,
+Bonjour,
 
-Je vous transmets un constat effectué ce jour, en tant qu'usager.
+Je me permets de vous contacter pour vous signaler une situation constatée
+à l'instant.
 
-  Date et heure : {date} à {heure}
-  Lieu : {adresse}, {commune}
-  Coordonnées relevées : {latitude}, {longitude}
-  Situation constatée : un emplacement de recharge pour véhicules électriques
-    est occupé par un véhicule qui n'est pas raccordé au point de charge.
-  {autres emplacements}
-  {depuis quand}
+Un véhicule est actuellement stationné sur un emplacement réservé aux
+véhicules électriques, sans être raccordé à la borne de recharge.
 
-Une photographie de la situation est jointe à ce message.
+Aucun autre point de charge n'étant accessible sur ce site, cela bloque
+mon accès à la recharge.
 
-Je ne suis pas en mesure de qualifier juridiquement cette situation ni
-d'identifier le véhicule concerné. Je vous transmets ce constat afin qu'un
-agent puisse, s'il le juge utile, venir l'apprécier sur place.
+Voici les informations constatées :
 
-Je vous prie d'agréer, Madame, Monsieur, l'expression de ma considération
-distinguée.
+* Date et heure : {date} à {heure}
+* Adresse précise : {adresse, ou coordonnées relevées}
+* Véhicule constaté : {marque, modèle, couleur} – Immatriculation : {plaque}
+
+Je vous transmets ces éléments afin qu'un agent puisse, s'il le juge
+utile, venir l'apprécier sur place.
+
+En vous remerciant pour votre aide et votre travail au quotidien.
+
+Bien cordialement,
+
+{nom}
+{téléphone}
 ```
 
-Aucune signature n'est ajoutée par l'appli : c'est la messagerie de l'utilisateur qui
-l'apporte, et c'est bien lui qui écrit, pas nous.
+## Comment le produit le remplit
 
----
+| Champ | Comportement |
+|---|---|
+| Date et heure | Automatique, au moment où l'écran d'envoi s'ouvre |
+| Adresse précise | Ce que l'utilisateur écrit ; à défaut, les coordonnées GPS relevées ; à défaut, le gabarit `[Adresse complète / Emplacement de la borne]` reste visible |
+| Véhicule constaté | **La ligne entière disparaît** si les deux champs sont vides — une ligne vide dans un courrier administratif le fait classer |
+| Immatriculation | Facultative, passée en majuscules, jamais préremplie, jamais conservée |
+| Nom et téléphone | Si vides, les gabarits `[Prénom Nom]` et `[Numéro de téléphone]` restent, **et un avertissement rouge s'affiche** : mieux vaut voir l'oubli que l'envoyer |
 
-## Pourquoi chaque phrase est écrite comme ça
+## Décision fondateur du 29 août 2026 — l'immatriculation
 
-**« en tant qu'usager »** — pose la position : quelqu'un qui subit, pas quelqu'un qui dénonce.
+Le garde-fou n°4 du brief disait « aucune plaque, jamais ». **Le fondateur l'a levé**, avec ce
+motif : donner la plaque et une photo fait gagner du temps à l'agent.
 
-**« un véhicule qui n'est pas raccordé au point de charge »** — c'est un fait observable par
-n'importe qui, vérifiable sur la photo. Ni « une voiture thermique » (l'utilisateur ne peut pas
-toujours le savoir, et un VE non branché est exactement le même problème), ni « en infraction »
-(ce n'est pas à lui de le dire).
+**Rien dans le droit ne s'y oppose** `[CONCORDANT, à confirmer en V12]`. Transmettre une
+immatriculation à un service compétent, dans un signalement, est un usage ordinaire — c'est
+d'ailleurs ce que fait n'importe quel formulaire municipal de signalement. Ce qui est proscrit,
+c'est de **publier** une plaque ou d'en **constituer un fichier**. L'appli ne fait ni l'un ni
+l'autre : le champ est facultatif, jamais prérempli, et disparaît au rechargement de la page
+puisque rien n'est stocké.
 
-**Aucune plaque, aucune marque, aucune couleur, aucun modèle.** L'appli ne les demande pas et le
-message n'en porte pas. Ce n'est pas une précaution de forme : c'est ce qui fait que l'appli
-n'est pas un fichier. La photo, elle, montrera ce qu'elle montre — mais c'est l'utilisateur qui
-la joint, depuis sa messagerie, sous sa responsabilité.
+Ce qui reste vrai du garde-fou : **l'appli n'est toujours pas un fichier de plaques.** C'était
+le fond de la règle ; sa rédaction absolue est ce qui a changé.
 
-**« Je ne suis pas en mesure de qualifier juridiquement cette situation »** — la phrase la plus
-importante du message. Elle dit la vérité établie à l'étape 1 : seul un agent constate. Elle
-protège l'utilisateur, elle évite au destinataire de croire qu'on lui dicte sa conduite, et elle
-empêche le service de promettre ce qu'il ne peut pas tenir.
+## Ce qui a disparu par rapport à la version précédente, et ce que ça coûte
 
-**« s'il le juge utile »** — le destinataire garde la main. Un message qui somme une
-administration d'agir se fait classer.
+L'ancienne rédaction portait une phrase — *« Je ne suis pas en mesure de qualifier juridiquement
+cette situation ni d'identifier le véhicule concerné »* — qui n'existe plus. Elle protégeait
+l'expéditeur en marquant qu'il ne se substituait pas à l'agent.
 
-**Pas de point d'exclamation, pas de majuscules, pas d'adverbe d'indignation.** Le ton est le
-produit autant que le formulaire.
+Le nouveau texte garde l'essentiel de cette précaution avec *« afin qu'un agent puisse, s'il le
+juge utile, venir l'apprécier sur place »* : la décision reste à l'agent, aucune verbalisation
+n'est réclamée.
 
----
+**Mais il faut voir ce qui a changé.** Le message affirme désormais comme des faits établis trois
+choses que l'appli ne vérifie plus, puisque les questions correspondantes ont été supprimées :
+
+1. que l'emplacement est **réservé** aux véhicules électriques ;
+2. que le véhicule **n'est pas raccordé** ;
+3. qu'**aucun autre point de charge** n'est accessible.
+
+C'est un choix assumé, et il se défend : celui qui écrit est sur place, il voit les trois, et lui
+poser la question ralentit un parcours qui doit tenir en trente secondes. **La conséquence est
+qu'en cas d'erreur, c'est l'expéditeur qui l'assume, pas l'appli.** Si le véhicule était en
+charge terminée, ou l'emplacement non réservé, le courrier affirme un fait faux — sous la
+signature de l'utilisateur.
 
 ## Formulations écartées, et pourquoi
 
@@ -74,40 +94,33 @@ produit autant que le formulaire.
 |---|---|
 | « véhicule ventouse » | Terme militant, préjuge de la durée |
 | « voiture thermique » | Souvent invérifiable, et hors sujet : le problème est le non-raccordement |
-| « stationnement illicite / en infraction » | Qualification juridique — pas au citoyen de la porter |
-| « je demande la verbalisation » | Demande impossible à satisfaire ; discrédite l'expéditeur |
-| « immatriculée XX-000-XX » | Donnée personnelle. Jamais. |
+| « en infraction », « stationnement illicite » | Qualification juridique — pas au citoyen de la porter |
+| « je demande la verbalisation » | Réclame ce qu'un signalement ne peut pas obtenir ; discrédite l'expéditeur |
+| « merci de faire le nécessaire » | Injonction déguisée. Un courrier qui somme une administration se fait classer |
 | « comme d'habitude », « une fois de plus » | Sous-entend un historique que l'appli ne tient pas |
-| « merci de faire le nécessaire » | Injonction déguisée |
 
----
+## Le script téléphonique
 
-## La phrase réglementaire, à ajouter après vérification
+Quand le service le plus proche n'a pas de courriel connu, l'appli affiche un script à lire
+plutôt qu'un texte à envoyer. Il est plafonné à 500 caractères par un autotest : au-delà,
+l'appelant improvise, et c'est là qu'il dit « ce chauffard ».
 
-**Ne pas l'insérer dans le produit avant que V1, V2 et V3 du protocole de vérification soient
-faites** — c'est-à-dire avant d'avoir lu l'article sur Légifrance.
-
-> Cette situation paraît relever de l'article R417-10 du code de la route, qui range parmi les
-> stationnements gênants le stationnement devant les dispositifs de recharge des véhicules
-> électriques.
-
-Trois conditions avant de l'utiliser : que la rédaction exacte de l'article soit celle-là ; que
-le cas soit bien au R417-10 et non au R417-11 ; et que « devant les dispositifs » couvre bien la
-situation décrite. Si l'un des trois tombe, la phrase change ou disparaît.
-
-`[HYPOTHÈSE]` Le conditionnel — « paraît relever » — est probablement le bon registre même une
-fois la vérification faite : il informe le destinataire sans se substituer à lui.
-
----
+```
+Bonjour. Ce n'est pas une urgence, je vous appelle pour un signalement.
+Je suis {lieu}.
+Un véhicule occupe un emplacement de recharge sans être raccordé à la borne, et
+il n'y a pas d'autre point de charge libre ici.
+La plaque est {plaque}.
+Il est {heure}. J'ai une photo si elle vous est utile.
+Je vous laisse en juger.
+```
 
 ## À faire relire par un juriste si le verdict est GO
 
-1. Le message peut-il, tel quel, engager la responsabilité de son expéditeur — dénonciation
-   téméraire, diffamation — si le constat s'avère erroné (véhicule électrique en charge terminée,
-   place non réservée, panne) ?
-2. L'éditeur de l'appli encourt-il quelque chose en **outillant** ces envois, alors qu'il ne
-   traite ni ne conserve aucune donnée ?
-3. La photo jointe par l'utilisateur, qui montrera une plaque, change-t-elle la réponse — pour
-   lui, pour nous ?
-4. La mention « en tant qu'usager » suffit-elle à écarter toute apparence de mandat ou de
-   mission de constatation ?
+1. Le message peut-il engager la responsabilité de son expéditeur — dénonciation téméraire,
+   diffamation — si l'un des trois faits affirmés s'avère inexact ?
+2. La transmission de l'immatriculation à un service compétent appelle-t-elle une mention
+   particulière côté RGPD, du côté de l'utilisateur ou de l'éditeur ?
+3. L'éditeur encourt-il quelque chose en **outillant** ces envois, alors qu'il ne traite ni ne
+   conserve aucune donnée ?
+4. Le partage natif, qui joint la photo, change-t-il la réponse ?
