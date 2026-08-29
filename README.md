@@ -22,12 +22,12 @@ projet, ce README n'en est que le suivi.
 | 1 | Vérité terrain — la douleur ET le canal | [`01-recherche/recherche.md`](01-recherche/recherche.md) | 🟡 **partielle** — sources primaires inaccessibles |
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
-| 4 | Construire la marque | `03-marque/marque.md` | ⬜ non commencée |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 25 autotests au vert |
+| 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 28 autotests au vert |
 | 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ livré **sans référence juridique** (non vérifiable) |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
-| 8 | Essayer de le tuer (red team) | `06-red-team/red-team.md` | ⬜ non commencée |
-| 9 | Verdict | `07-verdict/verdict.md` | ⬜ non commencée |
+| 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
+| 9 | Verdict | [`07-verdict/verdict.md`](07-verdict/verdict.md) | ✅ **GO conditionnel, limité à la phase 0** |
 
 ### ⚠ Ce que l'étape 1 a changé
 
@@ -46,8 +46,18 @@ Toutes les affirmations juridiques sont étiquetées `[CONCORDANT]`, `[ISOLÉ]` 
 un **protocole de vérification en 10 points** attend en fin de `recherche.md`. Rien de ce
 document ne doit être recopié ailleurs avant ces vérifications.
 
-**Prochaine session : étape 1.** Modèle Fable. Elle porte le risque fatal du projet (voir
-ci-dessous) — tant qu'il n'est pas tranché, rien d'autre ne mérite d'être construit.
+### Le verdict, en une phrase
+
+**GO conditionnel, strictement limité à la phase 0** : deux heures de vérifications, puis
+trois signalements réels dans une ville. Aucune mise en ligne, aucun nom, aucun
+élargissement — et les critères de mort sont écrits d'avance, avant la mesure, dans
+[`07-verdict/verdict.md`](07-verdict/verdict.md).
+
+**Prochaine session : les vérifications V1 à V10**, avec un navigateur qui a accès au web.
+Une demi-heure de travail qui consolide ou casse tout ce qui précède. Les deux plus
+importantes sont V7 (les CSV de data.gouv portent-ils un champ courriel ?) et V8 (que
+proposent réellement cinq communes d'échantillon ?) : elles décident si le produit est
+constructible à l'échelle nationale ou seulement ville par ville.
 
 ---
 
@@ -74,7 +84,7 @@ Le travail avance seul ; ces décisions seules l'arrêtent.
 | L'angle : à qui on écrit | 2 | ⬜ en attente de l'étape 1 |
 | Le nom du service | 4 | ⬜ |
 | Le modèle : gratuit citoyen ou financé | 3 | ⬜ |
-| GO / NO-GO / PIVOT | 9 | ⬜ |
+| GO / NO-GO / PIVOT | 9 | 🟡 **recommandé : GO conditionnel phase 0**. À signer. |
 
 ---
 

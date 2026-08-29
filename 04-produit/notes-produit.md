@@ -1,6 +1,6 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 33 ko, un seul fichier, aucune dépendance.
+Prototype `index.html`, 35 ko, un seul fichier, aucune dépendance.
 
 ---
 
@@ -8,7 +8,7 @@ Prototype `index.html`, 33 ko, un seul fichier, aucune dépendance.
 
 Chromium via Playwright, `file://`, 390 px et 1100 px, le 29 août 2026.
 
-- **25 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
+- **28 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
 - **Parcours complet joué** : accueil → photo → lieu → situation → envoi, dans les deux cas
   (commune connue, commune inconnue).
 - **Aucune erreur console.**

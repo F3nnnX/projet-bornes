@@ -15,7 +15,7 @@ succès.
 Pas « ai-je eu une réponse » — un accusé de réception automatique n'est pas un résultat.
 La seule question qui compte :
 
-> **Un agent est-il venu pendant que le véhicule était encore là&#8239;?**
+> **Un agent est-il venu pendant que le véhicule était encore là ?**
 
 C'est la promesse du service, telle que l'étape 2 l'a reformulée. Tout le reste est secondaire.
 
@@ -35,14 +35,14 @@ Trois cas volontairement différents, pas trois fois le même :
 
 1. **Horodatage du constat** et **horodatage de l'envoi** — l'écart mesure le parcours réel.
 2. **Durée réelle du parcours**, chronomètre en main. Le budget théorique est de 30 s.
-3. **La photo a-t-elle été jointe&#8239;?** Question centrale : c'est le point faible connu du
+3. **La photo a-t-elle été jointe ?** Question centrale : c'est le point faible connu du
    procédé `mailto:`.
 4. **Canal utilisé** et, s'il a fallu chercher, **combien de temps** cette recherche a pris.
-5. **Réponse reçue&#8239;?** Nature (automatique / humaine), délai exact.
-6. **Un agent est-il venu&#8239;?** Constaté comment — sur place, par un retour, pas du tout.
-7. **Le véhicule était-il encore là&#8239;?** À l'arrivée de l'agent, ou à défaut au départ du
+5. **Réponse reçue ?** Nature (automatique / humaine), délai exact.
+6. **Un agent est-il venu ?** Constaté comment — sur place, par un retour, pas du tout.
+7. **Le véhicule était-il encore là ?** À l'arrivée de l'agent, ou à défaut au départ du
    fondateur.
-8. **La borne a-t-elle été libérée&#8239;?** Dans quel délai.
+8. **La borne a-t-elle été libérée ?** Dans quel délai.
 9. **Ce qui a agacé** pendant l'utilisation. À chaud, en une phrase.
 
 ## Règles pendant le test

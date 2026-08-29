@@ -71,8 +71,13 @@ qu'ils aient un compte GitHub, ce qui est peu probable pour ce public.
 
 ## La position RGPD, en clair
 
-L'appli ne traite aucune donnée personnelle **pour son compte** : rien ne sort du navigateur,
-rien n'est stocké, il n'y a pas de serveur, pas de mesure d'audience, pas de cookie.
+L'appli ne traite aucune donnée personnelle **pour son compte** : rien n'est stocké, il n'y a
+pas de base, pas de mesure d'audience, pas de cookie.
+
+Une nuance que la red team a imposée (A3) et qu'il faut écrire telle quelle plutôt que de
+laisser entendre l'absolu : **l'hébergeur, lui, journalise les connexions.** GitHub Pages
+enregistre les adresses IP des visiteurs, comme tout hébergeur web. Le projet n'y a pas accès et
+n'en fait rien, mais la phrase « aucune donnée » est fausse et ne doit pas être employée.
 
 La photo et le constat partent de la **messagerie de l'utilisateur**, sous **sa** responsabilité,
 vers un destinataire **qu'il choisit**. L'appli est un stylo, pas un fichier.

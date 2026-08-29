@@ -179,6 +179,11 @@ footer{max-width:34rem;margin:2rem auto 0;padding:0 1rem 2rem;font-size:.8rem;co
   <label class="choix"><input type="radio" name="branche" value="invisible">Je ne peux pas le voir d'où je suis</label>
   <label class="choix"><input type="radio" name="branche" value="oui">Oui, il est raccordé</label>
 
+  <h3>L'emplacement est-il réservé à la recharge&#8239;?</h3>
+  <label class="choix"><input type="radio" name="reserve" value="oui">Oui, c'est marqué au sol ou signalé</label>
+  <label class="choix"><input type="radio" name="reserve" value="non">Non, rien ne l'indique</label>
+  <label class="choix"><input type="radio" name="reserve" value="inconnu">Je ne sais pas</label>
+
   <h3>D'autres emplacements de recharge sont-ils libres ici&#8239;?</h3>
   <label class="choix"><input type="radio" name="autres" value="aucun">Non, aucun</label>
   <label class="choix"><input type="radio" name="autres" value="oui">Oui, il en reste</label>
@@ -231,7 +236,8 @@ footer{max-width:34rem;margin:2rem auto 0;padding:0 1rem 2rem;font-size:.8rem;co
 </main>
 
 <footer>
-  Prototype — projet « Bornes », étape 5. Aucune donnée ne quitte ce navigateur.
+  Prototype — projet « Bornes », étape 5. Cette page ne stocke rien et n'envoie rien
+  elle-même&#8239;: c'est vous qui envoyez, depuis votre messagerie, à qui vous voulez.
   <a href="#tests" id="lien-tests">Autotests</a>
 </footer>
 
@@ -265,7 +271,8 @@ const CANAUX = [
    un rechargement de page efface tout. C'est voulu — pas d'historique. */
 const constat = {
   photo: null, lat: null, lon: null, precision: null,
-  adresse: '', commune: '', branche: null, autres: null, duree: null, horodatage: null
+  adresse: '', commune: '', branche: null, reserve: null, autres: null, duree: null,
+  horodatage: null
 };
 
 /* Garde anti-répétition, en mémoire vive uniquement : empêche d'enchaîner
@@ -318,12 +325,20 @@ function construireConstat(etat){
   const lieu = etat.adresse ? etat.adresse : 'lieu non précisé';
   const commune = etat.commune ? etat.commune : 'commune non précisée';
 
-  const objet = 'Constat : emplacement de recharge occupé — ' + lieu + ', le ' + date;
+  /* Un utilisateur qui n'a pas pu voir si le véhicule était raccordé ne
+     constate pas : il signale. Le mot change, et l'en-tête du courrier
+     avec lui — sinon l'appli laisse passer un constat fondé sur rien. */
+  const vu = etat.branche !== 'invisible';
+  const nature = vu ? 'Constat' : 'Signalement';
+  const objet = nature + ' : emplacement de recharge occupé — ' + lieu + ', le ' + date;
 
   const lignes = [];
   lignes.push('Madame, Monsieur,');
   lignes.push('');
-  lignes.push('Je vous transmets un constat effectué ce jour, en tant qu\'usager.');
+  lignes.push(vu
+    ? 'Je vous transmets un constat effectué ce jour, en tant qu\'usager.'
+    : 'Je vous transmets un signalement effectué ce jour, en tant qu\'usager. Je\n'
+      + 'n\'ai pas pu observer la situation d\'assez près pour la constater.');
   lignes.push('');
   lignes.push('  Date et heure : ' + date + ' à ' + heure);
   lignes.push('  Lieu : ' + lieu + ', ' + commune);
@@ -337,6 +352,14 @@ function construireConstat(etat){
       ? 'dont je ne peux pas vérifier, depuis ma position, s\'il est raccordé'
       : 'qui n\'est pas raccordé au point de charge'
   ) + '.');
+  if (etat.reserve === 'oui') {
+    lignes.push('  L\'emplacement est signalé comme réservé à la recharge.');
+  } else if (etat.reserve === 'non') {
+    /* Sans marquage, il n'y a peut-être aucun manquement. Le dire protège
+       à la fois le conducteur mis en cause et la crédibilité de l'expéditeur. */
+    lignes.push('  L\'emplacement ne me paraît pas signalé comme réservé à la');
+    lignes.push('    recharge : il est possible qu\'aucune règle ne soit en cause.');
+  }
   if (etat.autres === 'aucun') {
     lignes.push('  Aucun autre emplacement de recharge n\'est disponible sur ce site.');
   } else if (etat.autres === 'oui') {
@@ -448,6 +471,7 @@ document.querySelectorAll('input[name=branche]').forEach(r => {
 document.getElementById('btn-situation-suite').addEventListener('click', function(){
   const lu = n => { const el = document.querySelector('input[name=' + n + ']:checked'); return el ? el.value : null; };
   constat.branche = lu('branche');
+  constat.reserve = lu('reserve');
   constat.autres  = lu('autres');
   constat.duree   = lu('duree');
   constat.horodatage = new Date();
@@ -554,7 +578,7 @@ function lancerTests(){
   const base = {
     lat: 43.296482, lon: 5.369780, precision: 12,
     adresse: '12 rue de la République', commune: 'Marseille',
-    branche: 'non', autres: 'aucun', duree: 'quart',
+    branche: 'non', reserve: 'oui', autres: 'aucun', duree: 'quart',
     horodatage: new Date(2026, 7, 29, 14, 5)
   };
   const m = construireConstat(base);
@@ -592,6 +616,16 @@ function lancerTests(){
     !m.corps.includes('photographie'), 'sinon le destinataire la cherche');
   verifier('Avec photo, le courrier l\'annonce',
     mAvecPhoto.corps.includes('photographie'));
+
+  const mNonReserve = construireConstat(Object.assign({}, base, { reserve: 'non' }));
+  verifier('Sans emplacement réservé, le courrier le signale',
+    mNonReserve.corps.includes('aucune règle ne soit en cause'),
+    'un stationnement légal ne doit pas passer pour un manquement');
+  verifier('L\'objet dit « Signalement » quand rien n\'a été vu',
+    mInvisible.objet.startsWith('Signalement') && m.objet.startsWith('Constat'));
+  verifier('Sans avoir vu, le courrier ne parle pas de constat',
+    mInvisible.corps.includes('signalement effectué')
+    && !mInvisible.corps.includes('constat effectué'));
 
   const mSansGps = construireConstat(Object.assign({}, base, { lat: null, lon: null }));
   verifier('Sans GPS, le constat se construit quand même',
