@@ -23,7 +23,7 @@ projet, ce README n'en est que le suivi.
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
 | 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v4**, 35 autotests au vert — 3 gestes, photo obligatoire, signature mémorisée sur l'appareil |
+| 5 | Construire le produit (PWA un fichier) | [`docs/index.html`](docs/index.html) + [notes](04-produit/notes-produit.md) | ✅ **v4**, 35 autotests au vert — 3 gestes, photo obligatoire, signature mémorisée sur l'appareil |
 | 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ **validé par le fondateur** le 29/08/2026, repris mot pour mot dans le produit |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
 | 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
@@ -145,14 +145,32 @@ Ils ne se négocient pas en cours de route. Version complète dans le prompt-ma�
 
 ## Le site
 
-Décidé à l'étape 0, **construit seulement si le verdict est GO** :
+**https://f3nnnx.github.io/projet-bornes/** — servi par GitHub Pages depuis `docs/` sur `main`.
 
-- une **vitrine** — ce qu'est le service, ce qu'il n'est pas, la position RGPD, le message type ;
-- la **PWA** elle-même, installable sur l'écran d'accueil Android sans passer par le Play Store.
+L'application y est seule : pas de vitrine. La décision de l'étape 0 prévoyait « vitrine + PWA »,
+mais l'usage est devenu strictement personnel et la priorité est le nombre de gestes — une page
+d'accueil à traverser serait un geste de trop. L'écran « Ce que fait cette appli » tient ce rôle
+depuis l'intérieur.
 
-Servi par GitHub Pages depuis `docs/`, alimenté par `04-produit/index.html`. Rien n'est activé
-avant le GO : basculer le dépôt en public et activer Pages est une action manuelle du fondateur,
-pas une étape du travail.
+### Les deux clics à faire une fois
+
+Aucune des deux actions n'est automatisable depuis une session de travail :
+
+1. **Settings → General → Danger Zone → Change visibility → Public.**
+   GitHub Pages n'existe pas sur un dépôt privé avec un compte gratuit.
+2. **Settings → Pages → Source : Deploy from a branch → `main` / `/docs` → Save.**
+
+Le déploiement prend une à deux minutes. Ensuite, sur Android : ouvrir l'URL dans Chrome, menu
+⋮ → « Ajouter à l'écran d'accueil ». L'application s'installe, avec son icône, sans Play Store.
+
+**Ce que la mise en public expose**, et que le fondateur a accepté le 29/08/2026 : l'adresse
+électronique de l'auteur figure dans les métadonnées des commits. En revanche son nom et son
+numéro de téléphone n'y sont pas — ils vivent dans le stockage du téléphone, pas dans le code.
+
+**Ce qu'il faut vérifier au premier essai sur place**, avant tout : ouvrir l'écran
+**Diagnostic** en pied de page. Il montre les deux appels d'API et leur réponse brute. Le
+contrat de l'annuaire n'a pas pu être vérifié pendant le développement ; c'est là que ça se
+voit.
 
 ---
 

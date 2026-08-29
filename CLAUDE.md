@@ -80,7 +80,7 @@ Chromium et Playwright sont disponibles dans l'environnement.
 const { chromium } = require('playwright');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const page = await b.newPage({ viewport: { width: 390, height: 900 } });
-await page.goto('file:///home/user/projet-bornes/04-produit/index.html');
+await page.goto('file:///home/user/projet-bornes/docs/index.html');
 ```
 
 Deux pièges de cette application en particulier : **l'appareil photo (`input capture`) et la

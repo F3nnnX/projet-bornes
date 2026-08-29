@@ -1,6 +1,19 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 45 ko, un seul fichier, aucune dépendance installée.
+Le produit est déployé dans **`docs/`**, à la racine du site GitHub Pages :
+
+| Fichier | Rôle |
+|---|---|
+| `docs/index.html` | **Toute l'application**, 45 ko, aucune dépendance installée |
+| `docs/manifest.webmanifest` | Rend l'application installable sur l'écran d'accueil |
+| `docs/icone-192.png`, `docs/icone-512.png` | Icônes d'installation, générées sans dépendance |
+
+Le « fichier unique » n'est donc plus tout à fait exact, et il faut le dire : **l'application
+tient en un fichier, son installation en demande trois de plus.** Un manifeste ne peut pas être
+inséré dans la page, et les icônes ne peuvent pas être des URL `data:` de façon fiable sur
+Android. C'est le prix de l'installation sur l'écran d'accueil, et il est modeste : 3 ko.
+
+Ce dossier-ci, `04-produit/`, garde les notes et le message type.
 **Version 2 du 29 août 2026**, refondue sur cahier des charges du fondateur : parcours ramené à
 deux écrans, géolocalisation dès l'ouverture, recherche du service compétent en arrière-plan,
 appareil photo en direct, partage natif pour joindre réellement la photo.
