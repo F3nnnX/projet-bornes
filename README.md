@@ -19,15 +19,32 @@ projet, ce README n'en est que le suivi.
 | # | Étape | Livrable | Statut |
 |---|---|---|---|
 | 0 | Échafaudage du dépôt | `README.md`, `CLAUDE.md`, arborescence | ✅ fait |
-| 1 | Vérité terrain — la douleur ET le canal | `01-recherche/recherche.md` | ⬜ à faire |
-| 2 | Choisir l'angle gagnant | `01-recherche/angle.md` | ⬜ à faire |
-| 3 | Concevoir le service | `02-plan/plan.md` | ⬜ à faire |
-| 4 | Construire la marque | `03-marque/marque.md` | ⬜ à faire |
-| 5 | Construire le produit (PWA un fichier) | `04-produit/index.html` + `notes-produit.md` | ⬜ à faire |
-| 6 | Le message type | `04-produit/message-type.md` | ⬜ à faire |
-| 7 | La preuve — test terrain réel | `05-terrain/protocole.md` + `mesures.md` | ⬜ bloqué : après le GO |
-| 8 | Essayer de le tuer (red team) | `06-red-team/red-team.md` | ⬜ à faire |
-| 9 | Verdict | `07-verdict/verdict.md` | ⬜ à faire |
+| 1 | Vérité terrain — la douleur ET le canal | [`01-recherche/recherche.md`](01-recherche/recherche.md) | 🟡 **partielle** — sources primaires inaccessibles |
+| 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
+| 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
+| 4 | Construire la marque | `03-marque/marque.md` | ⬜ non commencée |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 25 autotests au vert |
+| 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ livré **sans référence juridique** (non vérifiable) |
+| 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
+| 8 | Essayer de le tuer (red team) | `06-red-team/red-team.md` | ⬜ non commencée |
+| 9 | Verdict | `07-verdict/verdict.md` | ⬜ non commencée |
+
+### ⚠ Ce que l'étape 1 a changé
+
+**L'hypothèse fondatrice du brief est fausse.** Un e-mail citoyen avec photo ne peut pas
+déclencher de verbalisation : seul un agent assermenté constate une infraction. Et il n'existe
+**aucune base nationale d'adresses e-mail** de services de police — le `mailto:` prérempli du
+brief n'a personne à qui écrire.
+
+Le projet n'est pas mort pour autant. Le levier réel est **de faire venir un agent pendant que
+le véhicule est encore là**, et ce levier est **communal**. Voir
+[`01-recherche/angle.md`](01-recherche/angle.md) pour le pivot proposé.
+
+**Une réserve importante sur l'étape 1** : l'environnement de travail bloque l'accès direct au
+web. Aucune source primaire — Légifrance, service-public.fr, data.gouv.fr — n'a pu être ouverte.
+Toutes les affirmations juridiques sont étiquetées `[CONCORDANT]`, `[ISOLÉ]` ou `[HYPOTHÈSE]`, et
+un **protocole de vérification en 10 points** attend en fin de `recherche.md`. Rien de ce
+document ne doit être recopié ailleurs avant ces vérifications.
 
 **Prochaine session : étape 1.** Modèle Fable. Elle porte le risque fatal du projet (voir
 ci-dessous) — tant qu'il n'est pas tranché, rien d'autre ne mérite d'être construit.

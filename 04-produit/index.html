@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f5132">
+<title>Constat borne — prototype</title>
+<!--
+  PROTOTYPE — étape 5 du projet « Bornes ».
+
+  Construit sous l'hypothèse de l'angle C (aiguillage multi-canal), décision fondateur
+  encore en attente. Voir 01-recherche/angle.md.
+
+  Trois règles que ce fichier applique et qu'il ne faut pas défaire :
+
+  1. ZÉRO REQUÊTE RÉSEAU. Pas de <script src>, pas de <link rel=stylesheet>, pas de police
+     distante, pas de fond de carte. Un autotest le vérifie au chargement. La seule URL
+     sortante est un lien que l'utilisateur clique lui-même.
+  2. AUCUNE DONNÉE PERSONNELLE. La plaque n'est jamais demandée, le message ne la porte
+     jamais, rien n'est stocké — ni serveur, ni localStorage, ni cookie. La photo ne quitte
+     pas le navigateur : c'est l'utilisateur qui la joint depuis sa messagerie.
+  3. AUCUNE RÉFÉRENCE JURIDIQUE tant que les vérifications V1-V3 ne sont pas faites
+     (voir 01-recherche/recherche.md). Le message est volontairement amputé plutôt que faux.
+-->
+<style>
+:root{
+  --fond:#f7f7f5; --carte:#fff; --texte:#1a1a18; --doux:#5c5c55; --trait:#dedbd4;
+  --accent:#0f5132; --accent-clair:#e7f0ea; --alerte:#8a2b1f; --alerte-clair:#fbecea;
+  --rayon:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --fond:#15151a; --carte:#1e1e25; --texte:#ececf0; --doux:#a0a0ab; --trait:#33333d;
+         --accent:#5fbf8f; --accent-clair:#1c2f26; --alerte:#f0857a; --alerte-clair:#33201d; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fond);color:var(--texte);
+  font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+main{max-width:34rem;margin:0 auto;padding:1.25rem 1rem 4rem}
+h1{font-size:1.5rem;line-height:1.25;margin:0 0 .5rem;font-weight:650;letter-spacing:-.01em}
+h2{font-size:1.2rem;margin:0 0 .35rem;font-weight:650;letter-spacing:-.01em}
+h3{font-size:.95rem;margin:1.25rem 0 .4rem;font-weight:650;color:var(--doux);
+   text-transform:uppercase;letter-spacing:.05em}
+p{margin:0 0 .8rem}
+.ecran{display:none}
+.ecran.actif{display:block;animation:apparait .18s ease-out}
+@keyframes apparait{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.carte{background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);
+  padding:1rem;margin:0 0 .9rem}
+.doux{color:var(--doux);font-size:.9rem}
+.bouton{display:block;width:100%;padding:.95rem 1rem;border-radius:var(--rayon);border:0;
+  background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer;
+  text-align:center;text-decoration:none;margin:0 0 .6rem}
+@media (prefers-color-scheme:dark){ .bouton{color:#0d1a13} }
+.bouton:disabled{opacity:.4;cursor:not-allowed}
+.bouton.secondaire{background:transparent;color:var(--texte);border:1px solid var(--trait);font-weight:500}
+.bouton.geant{padding:1.6rem 1rem;font-size:1.15rem}
+label{display:block;font-weight:600;margin:0 0 .3rem;font-size:.95rem}
+input[type=text],textarea{width:100%;padding:.7rem;border:1px solid var(--trait);
+  border-radius:10px;background:var(--fond);color:var(--texte);font:inherit}
+textarea{min-height:14rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;line-height:1.5}
+.choix{display:block;border:1px solid var(--trait);border-radius:10px;padding:.7rem .85rem;
+  margin:0 0 .45rem;cursor:pointer;font-weight:500}
+.choix:has(input:checked){border-color:var(--accent);background:var(--accent-clair);font-weight:600}
+.choix input{margin-right:.55rem;accent-color:var(--accent)}
+.fil{display:flex;gap:.3rem;margin:0 0 1.1rem}
+.fil span{flex:1;height:3px;border-radius:2px;background:var(--trait)}
+.fil span.faite{background:var(--accent)}
+.avert{background:var(--alerte-clair);border:1px solid var(--alerte);border-radius:var(--rayon);
+  padding:.8rem .9rem;margin:0 0 .9rem;font-size:.9rem}
+.avert strong{color:var(--alerte)}
+.info{background:var(--accent-clair);border-radius:10px;padding:.7rem .85rem;font-size:.9rem;margin:0 0 .9rem}
+.apercu{max-width:100%;border-radius:10px;display:block;margin:.6rem 0}
+.ok{color:var(--accent);font-weight:600}
+.ko{color:var(--alerte);font-weight:600}
+#resultats-tests li{margin:0 0 .3rem;font-size:.88rem}
+#resultats-tests{padding-left:1.1rem;margin:0}
+footer{max-width:34rem;margin:2rem auto 0;padding:0 1rem 2rem;font-size:.8rem;color:var(--doux);
+  border-top:1px solid var(--trait);padding-top:1rem}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ─────────────── ACCUEIL ─────────────── -->
+<section id="ecran-accueil" class="ecran actif">
+  <h1>Une borne bloquée&#8239;?</h1>
+  <p class="doux">Préparez un constat factuel et horodaté, et sachez à qui l'envoyer.</p>
+
+  <div class="avert">
+    <strong>Ce service ne fait pas verbaliser.</strong> Aucun signalement de particulier ne le
+    peut&#8239;: seul un agent assermenté constate une infraction. Ce qu'il fait, c'est préparer
+    un constat et vous dire à qui l'adresser pour qu'un agent puisse venir pendant que le
+    véhicule est encore là.
+  </div>
+
+  <button class="bouton geant" id="btn-commencer">Constater</button>
+  <button class="bouton secondaire" id="btn-a-propos">Ce que fait, et ne fait pas, cette appli</button>
+</section>
+
+<!-- ─────────────── À PROPOS ─────────────── -->
+<section id="ecran-apropos" class="ecran">
+  <h2>Ce que fait cette appli</h2>
+  <p>Elle assemble un constat&#8239;: la date, l'heure, le lieu, ce que vous avez observé. Elle
+  vous indique le canal connu pour votre commune. Elle ouvre votre messagerie avec le texte déjà
+  écrit. C'est tout.</p>
+
+  <h3>Ce qu'elle ne fait pas</h3>
+  <ul class="doux">
+    <li>Elle ne demande jamais la plaque d'immatriculation, et le message n'en porte aucune.</li>
+    <li>Elle ne stocke rien&#8239;: pas de compte, pas d'historique, pas de serveur, pas de
+    mesure d'audience, pas de cookie.</li>
+    <li>Elle n'envoie rien elle-même. C'est votre messagerie qui envoie, sous votre
+    responsabilité, au destinataire que vous choisissez.</li>
+    <li>Elle ne sait pas ce que devient votre signalement — elle n'a pas de serveur pour
+    l'apprendre, donc elle ne vous le promet pas.</li>
+    <li>Elle ne permet pas l'envoi en masse ni le signalement répété.</li>
+  </ul>
+
+  <h3>La photo</h3>
+  <p class="doux">Elle reste dans votre téléphone. L'appli ne peut pas la joindre au message
+  elle-même&#8239;: le mécanisme d'ouverture de messagerie (<code>mailto:</code>) ne sait pas
+  transporter de pièce jointe. Vous la joindrez d'un geste, l'appli vous le rappelle au moment
+  voulu.</p>
+
+  <button class="bouton secondaire" data-retour="accueil">Retour</button>
+</section>
+
+<!-- ─────────────── 1. PHOTO ─────────────── -->
+<section id="ecran-photo" class="ecran">
+  <div class="fil"><span class="faite"></span><span></span><span></span><span></span></div>
+  <h2>La photo</h2>
+  <p class="doux">Cadrez la borne et le véhicule. Inutile de viser la plaque&#8239;: le constat
+  n'en parlera pas.</p>
+
+  <div class="carte">
+    <label for="champ-photo">Photographier la situation</label>
+    <input type="file" id="champ-photo" accept="image/*" capture="environment">
+    <img id="apercu-photo" class="apercu" alt="" hidden>
+    <p class="doux" id="etat-photo">Aucune photo pour l'instant.</p>
+  </div>
+
+  <button class="bouton" id="btn-photo-suite">Continuer</button>
+  <button class="bouton secondaire" data-retour="accueil">Annuler</button>
+</section>
+
+<!-- ─────────────── 2. LIEU ─────────────── -->
+<section id="ecran-lieu" class="ecran">
+  <div class="fil"><span class="faite"></span><span class="faite"></span><span></span><span></span></div>
+  <h2>Le lieu</h2>
+
+  <div class="carte">
+    <button class="bouton secondaire" id="btn-geoloc">Relever ma position</button>
+    <p class="doux" id="etat-geoloc">Position non relevée.</p>
+    <p class="doux">L'appli ne convertit pas les coordonnées en adresse&#8239;: elle ne fait
+    aucune requête réseau. Les coordonnées sont exactes, l'adresse est celle que vous écrivez.</p>
+  </div>
+
+  <div class="carte">
+    <label for="champ-adresse">Adresse ou repère</label>
+    <input type="text" id="champ-adresse" placeholder="12 rue de la République, parking Monoprix…" autocomplete="off">
+    <label for="champ-commune" style="margin-top:.8rem">Commune</label>
+    <input type="text" id="champ-commune" placeholder="Marseille" autocomplete="off">
+  </div>
+
+  <button class="bouton" id="btn-lieu-suite">Continuer</button>
+  <button class="bouton secondaire" data-retour="photo">Retour</button>
+</section>
+
+<!-- ─────────────── 3. SITUATION ─────────────── -->
+<section id="ecran-situation" class="ecran">
+  <div class="fil"><span class="faite"></span><span class="faite"></span><span class="faite"></span><span></span></div>
+  <h2>Ce que vous observez</h2>
+  <p class="doux">Trois questions. Elles sont ce qui rend le constat crédible.</p>
+
+  <h3>Le véhicule est-il raccordé à la borne&#8239;?</h3>
+  <label class="choix"><input type="radio" name="branche" value="non">Non, il n'est pas raccordé</label>
+  <label class="choix"><input type="radio" name="branche" value="invisible">Je ne peux pas le voir d'où je suis</label>
+  <label class="choix"><input type="radio" name="branche" value="oui">Oui, il est raccordé</label>
+
+  <h3>D'autres emplacements de recharge sont-ils libres ici&#8239;?</h3>
+  <label class="choix"><input type="radio" name="autres" value="aucun">Non, aucun</label>
+  <label class="choix"><input type="radio" name="autres" value="oui">Oui, il en reste</label>
+  <label class="choix"><input type="radio" name="autres" value="inconnu">Je ne sais pas</label>
+
+  <h3>Depuis combien de temps&#8239;?</h3>
+  <label class="choix"><input type="radio" name="duree" value="arrivee">Je viens d'arriver</label>
+  <label class="choix"><input type="radio" name="duree" value="quart">J'attends depuis plus de quinze minutes</label>
+  <label class="choix"><input type="radio" name="duree" value="inconnu">Je ne sais pas</label>
+
+  <div id="bloc-raccorde" class="avert" hidden>
+    <strong>Il n'y a pas de constat à faire.</strong> Un véhicule raccordé occupe la borne pour
+    la raison prévue, même si la charge est terminée depuis longtemps. Cette appli ne sert pas à
+    signaler une attente.
+  </div>
+
+  <button class="bouton" id="btn-situation-suite">Continuer</button>
+  <button class="bouton secondaire" data-retour="lieu">Retour</button>
+</section>
+
+<!-- ─────────────── 4. DESTINATAIRE + ENVOI ─────────────── -->
+<section id="ecran-envoi" class="ecran">
+  <div class="fil"><span class="faite"></span><span class="faite"></span><span class="faite"></span><span class="faite"></span></div>
+  <h2>À qui l'envoyer</h2>
+
+  <div id="bloc-canal"></div>
+
+  <h3>Votre constat</h3>
+  <p class="doux">Relisez-le. Vous pouvez le modifier&#8239;: c'est vous qui l'envoyez.</p>
+  <textarea id="champ-message" spellcheck="true"></textarea>
+
+  <div class="info" id="rappel-photo" hidden>
+    <strong>N'oubliez pas la photo.</strong> Le message s'ouvrira dans votre messagerie sans
+    pièce jointe — c'est une limite du procédé, pas un oubli. Joignez-la depuis la galerie&#8239;:
+    c'est la dernière image prise.
+  </div>
+
+  <div id="bloc-actions"></div>
+  <button class="bouton secondaire" data-retour="situation">Retour</button>
+</section>
+
+<!-- ─────────────── AUTOTESTS ─────────────── -->
+<section id="ecran-tests" class="ecran">
+  <h2>Autotests</h2>
+  <p class="doux" id="bilan-tests"></p>
+  <ol id="resultats-tests"></ol>
+  <button class="bouton secondaire" data-retour="accueil">Retour</button>
+</section>
+
+</main>
+
+<footer>
+  Prototype — projet « Bornes », étape 5. Aucune donnée ne quitte ce navigateur.
+  <a href="#tests" id="lien-tests">Autotests</a>
+</footer>
+
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BASE DES CANAUX
+
+   Une entrée par commune. Le champ `verifie` n'est pas décoratif : l'appli
+   REFUSE d'utiliser un canal non vérifié, parce qu'un destinataire inventé
+   est pire que pas de destinataire du tout (garde-fou n°3).
+
+   Cette base est presque vide, et c'est l'état honnête du projet : la
+   collecte des canaux communaux est la vérification V8, elle n'est pas
+   faite. Chaque entrée doit porter sa source et sa date.
+   ══════════════════════════════════════════════════════════════════════════ */
+const CANAUX = [
+  {
+    commune: 'Paris',
+    type: 'appli',
+    libelle: 'DansMaRue — Ville de Paris',
+    url: 'https://www.paris.fr/pages/signaler-un-stationnement-genant-32019',
+    note: 'Le signalement part vers la police municipale. Rubrique « stationnement gênant ».',
+    verifie: true,
+    source: 'paris.fr, relevé le 29/08/2026 (voir 01-recherche/recherche.md §5)'
+  }
+];
+
+/* État du constat en cours. En mémoire seulement : rien n'est persisté, et
+   un rechargement de page efface tout. C'est voulu — pas d'historique. */
+const constat = {
+  photo: null, lat: null, lon: null, precision: null,
+  adresse: '', commune: '', branche: null, autres: null, duree: null, horodatage: null
+};
+
+/* Garde anti-répétition, en mémoire vive uniquement : empêche d'enchaîner
+   deux constats au même endroit dans la même session. Disparaît au
+   rechargement, donc ce n'est pas un historique. */
+let dernierLieuConstate = null;
+
+/* ─── Utilitaires ─────────────────────────────────────────────────── */
+
+/* Les espaces fines insécables sont justes à l'écran mais traversent mal
+   les messageries et les formulaires. Tout ce qui sort de l'appli repasse
+   en espace normale. */
+function versTexteBrut(s){
+  return String(s == null ? '' : s).replace(/[\u202F\u00A0]/g, ' ');
+}
+
+function sansAccent(s){
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036F]/g, '').toLowerCase().trim();
+}
+
+function deuxChiffres(n){ return String(n).padStart(2, '0'); }
+
+function formaterDate(d){
+  return deuxChiffres(d.getDate()) + '/' + deuxChiffres(d.getMonth()+1) + '/' + d.getFullYear();
+}
+function formaterHeure(d){
+  return deuxChiffres(d.getHours()) + 'h' + deuxChiffres(d.getMinutes());
+}
+
+/* ─── Sélection du canal ──────────────────────────────────────────── */
+
+function choisirCanal(commune){
+  const cible = sansAccent(commune);
+  if (!cible) return null;
+  const trouve = CANAUX.find(c => sansAccent(c.commune) === cible);
+  /* Un canal non vérifié est traité comme inexistant : mieux vaut le
+     parcours dégradé qu'un destinataire inventé. */
+  if (!trouve || !trouve.verifie) return null;
+  return trouve;
+}
+
+/* ─── Construction du constat ─────────────────────────────────────── */
+
+function construireConstat(etat){
+  if (etat.branche === 'oui') {
+    return { erreur: 'Le véhicule est raccordé : il n\'y a pas de constat à faire.' };
+  }
+  const d = etat.horodatage instanceof Date ? etat.horodatage : new Date();
+  const date = formaterDate(d), heure = formaterHeure(d);
+  const lieu = etat.adresse ? etat.adresse : 'lieu non précisé';
+  const commune = etat.commune ? etat.commune : 'commune non précisée';
+
+  const objet = 'Constat : emplacement de recharge occupé — ' + lieu + ', le ' + date;
+
+  const lignes = [];
+  lignes.push('Madame, Monsieur,');
+  lignes.push('');
+  lignes.push('Je vous transmets un constat effectué ce jour, en tant qu\'usager.');
+  lignes.push('');
+  lignes.push('  Date et heure : ' + date + ' à ' + heure);
+  lignes.push('  Lieu : ' + lieu + ', ' + commune);
+  if (etat.lat != null && etat.lon != null) {
+    lignes.push('  Coordonnées relevées : ' + etat.lat.toFixed(6) + ', ' + etat.lon.toFixed(6)
+      + (etat.precision != null ? ' (précision ' + Math.round(etat.precision) + ' m)' : ''));
+  }
+  lignes.push('  Situation constatée : un emplacement de recharge pour véhicules');
+  lignes.push('    électriques est occupé par un véhicule ' + (
+    etat.branche === 'invisible'
+      ? 'dont je ne peux pas vérifier, depuis ma position, s\'il est raccordé'
+      : 'qui n\'est pas raccordé au point de charge'
+  ) + '.');
+  if (etat.autres === 'aucun') {
+    lignes.push('  Aucun autre emplacement de recharge n\'est disponible sur ce site.');
+  } else if (etat.autres === 'oui') {
+    lignes.push('  D\'autres emplacements de recharge restent disponibles sur ce site.');
+  }
+  if (etat.duree === 'quart') {
+    lignes.push('  J\'observe cette situation depuis plus de quinze minutes.');
+  } else if (etat.duree === 'arrivee') {
+    lignes.push('  Je viens d\'arriver sur place.');
+  }
+  lignes.push('');
+  /* Ne jamais annoncer une pièce jointe qui n'existe pas : le destinataire
+     la chercherait, et le constat perdrait sa crédibilité d'un coup. */
+  if (etat.photo) {
+    lignes.push('Une photographie de la situation est jointe à ce message.');
+    lignes.push('');
+  }
+  lignes.push('Je ne suis pas en mesure de qualifier juridiquement cette situation ni');
+  lignes.push('d\'identifier le véhicule concerné. Je vous transmets ce constat afin');
+  lignes.push('qu\'un agent puisse, s\'il le juge utile, venir l\'apprécier sur place.');
+  lignes.push('');
+  lignes.push('Je vous prie d\'agréer, Madame, Monsieur, l\'expression de ma');
+  lignes.push('considération distinguée.');
+
+  /* Pas de référence réglementaire : elle n'est pas vérifiée (V1-V3).
+     Voir 04-produit/message-type.md pour la phrase à ajouter ensuite. */
+
+  return { objet: versTexteBrut(objet), corps: versTexteBrut(lignes.join('\n')) };
+}
+
+function lienMailto(adresseCourriel, objet, corps){
+  return 'mailto:' + encodeURIComponent(adresseCourriel || '')
+    + '?subject=' + encodeURIComponent(versTexteBrut(objet))
+    + '&body='    + encodeURIComponent(versTexteBrut(corps));
+}
+
+/* ─── Navigation ──────────────────────────────────────────────────── */
+
+const ECRANS = ['accueil','apropos','photo','lieu','situation','envoi','tests'];
+
+function montrer(nom){
+  ECRANS.forEach(e => {
+    const el = document.getElementById('ecran-' + e);
+    if (el) el.classList.toggle('actif', e === nom);
+  });
+  window.scrollTo(0, 0);
+  const titre = document.querySelector('#ecran-' + nom + ' h1, #ecran-' + nom + ' h2');
+  if (titre) { titre.setAttribute('tabindex','-1'); titre.focus({preventScroll:true}); }
+}
+
+/* ─── Écran photo ─────────────────────────────────────────────────── */
+
+document.getElementById('champ-photo').addEventListener('change', function(ev){
+  const f = ev.target.files && ev.target.files[0];
+  const apercu = document.getElementById('apercu-photo');
+  const etat = document.getElementById('etat-photo');
+  if (!f) { apercu.hidden = true; etat.textContent = 'Aucune photo pour l\'instant.'; return; }
+  constat.photo = f;
+  /* createObjectURL reste local au navigateur : aucune requête réseau. */
+  apercu.src = URL.createObjectURL(f);
+  apercu.hidden = false;
+  etat.textContent = 'Photo prise. Elle reste dans votre téléphone.';
+});
+
+document.getElementById('btn-photo-suite').addEventListener('click', () => montrer('lieu'));
+
+/* ─── Écran lieu ──────────────────────────────────────────────────── */
+
+document.getElementById('btn-geoloc').addEventListener('click', function(){
+  const etat = document.getElementById('etat-geoloc');
+  if (!navigator.geolocation) {
+    etat.textContent = 'Ce navigateur ne sait pas se géolocaliser. Écrivez l\'adresse ci-dessous.';
+    return;
+  }
+  etat.textContent = 'Relevé en cours…';
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      constat.lat = pos.coords.latitude;
+      constat.lon = pos.coords.longitude;
+      constat.precision = pos.coords.accuracy;
+      etat.textContent = 'Position relevée : ' + constat.lat.toFixed(5) + ', '
+        + constat.lon.toFixed(5) + ' (± ' + Math.round(constat.precision) + ' m)';
+    },
+    function(){
+      /* Le refus de géolocalisation n'est pas une panne : c'est un cas
+         nominal. La saisie manuelle reste le chemin principal. */
+      etat.textContent = 'Position non obtenue. Écrivez l\'adresse ci-dessous, ça suffit.';
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+});
+
+document.getElementById('btn-lieu-suite').addEventListener('click', function(){
+  constat.adresse = document.getElementById('champ-adresse').value.trim();
+  constat.commune = document.getElementById('champ-commune').value.trim();
+  montrer('situation');
+});
+
+/* ─── Écran situation ─────────────────────────────────────────────── */
+
+document.querySelectorAll('input[name=branche]').forEach(r => {
+  r.addEventListener('change', function(){
+    const raccorde = this.value === 'oui';
+    document.getElementById('bloc-raccorde').hidden = !raccorde;
+    document.getElementById('btn-situation-suite').disabled = raccorde;
+  });
+});
+
+document.getElementById('btn-situation-suite').addEventListener('click', function(){
+  const lu = n => { const el = document.querySelector('input[name=' + n + ']:checked'); return el ? el.value : null; };
+  constat.branche = lu('branche');
+  constat.autres  = lu('autres');
+  constat.duree   = lu('duree');
+  constat.horodatage = new Date();
+  preparerEnvoi();
+  montrer('envoi');
+});
+
+/* ─── Écran envoi ─────────────────────────────────────────────────── */
+
+function preparerEnvoi(){
+  const canal = choisirCanal(constat.commune);
+  const message = construireConstat(constat);
+  const blocCanal = document.getElementById('bloc-canal');
+  const blocActions = document.getElementById('bloc-actions');
+  blocCanal.innerHTML = '';
+  blocActions.innerHTML = '';
+
+  if (message.erreur) { blocCanal.innerHTML = '<div class="avert">' + message.erreur + '</div>'; return; }
+
+  document.getElementById('champ-message').value = message.corps;
+  document.getElementById('rappel-photo').hidden = !constat.photo;
+
+  /* Répétition au même endroit dans la même session : on prévient, on
+     n'interdit pas. Interdire supposerait de mémoriser, ce qu'on refuse. */
+  const cle = sansAccent(constat.commune) + '|' + sansAccent(constat.adresse);
+  if (dernierLieuConstate && dernierLieuConstate === cle) {
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="avert"><strong>Vous venez déjà de constater ici.</strong> Renvoyer le même ' +
+      'signalement ne le rendra pas plus rapide, et répéter n\'est pas le rôle de cette appli.</div>');
+  }
+  dernierLieuConstate = cle;
+
+  if (canal && canal.type === 'courriel') {
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="carte"><strong>' + canal.libelle + '</strong>' +
+      '<p class="doux">' + canal.note + '</p>' +
+      '<p class="doux">Source : ' + canal.source + '</p></div>');
+    const a = document.createElement('a');
+    a.className = 'bouton';
+    a.href = lienMailto(canal.courriel, message.objet, message.corps);
+    a.textContent = 'Ouvrir ma messagerie';
+    blocActions.appendChild(a);
+  } else if (canal) {
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="carte"><strong>' + canal.libelle + '</strong>' +
+      '<p class="doux">' + canal.note + '</p>' +
+      '<p class="doux">Cette commune a déjà son propre canal. Copiez le constat et collez-le ' +
+      'dans le formulaire — c\'est là qu\'il sera lu.</p>' +
+      '<p class="doux">Source : ' + canal.source + '</p></div>');
+    const a = document.createElement('a');
+    a.className = 'bouton'; a.href = canal.url;
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = 'Ouvrir ' + canal.libelle;
+    blocActions.appendChild(a);
+  } else {
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="avert"><strong>Aucun canal vérifié pour ' +
+      (constat.commune ? constat.commune : 'cette commune') + '.</strong> ' +
+      'Nous préférons le dire plutôt que vous envoyer vers une adresse au hasard. ' +
+      'Votre constat est prêt ci-dessous : copiez-le, puis adressez-le à la police municipale ' +
+      'ou à la mairie de votre commune.</div>');
+  }
+
+  const copier = document.createElement('button');
+  copier.className = 'bouton secondaire';
+  copier.textContent = 'Copier le constat';
+  copier.addEventListener('click', function(){
+    const zone = document.getElementById('champ-message');
+    zone.select();
+    /* execCommand est déprécié mais reste le seul chemin qui fonctionne
+       hors contexte sécurisé — donc en file:// pendant les tests. */
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(zone.value).then(() => { copier.textContent = 'Constat copié'; });
+      ok = true;
+    } else { try { ok = document.execCommand('copy'); } catch (e) { ok = false; } }
+    copier.textContent = ok ? 'Constat copié' : 'Copie impossible — sélectionnez le texte';
+  });
+  blocActions.appendChild(copier);
+}
+
+/* ─── Boutons génériques ──────────────────────────────────────────── */
+
+document.getElementById('btn-commencer').addEventListener('click', () => montrer('photo'));
+document.getElementById('btn-a-propos').addEventListener('click', () => montrer('apropos'));
+document.querySelectorAll('[data-retour]').forEach(b => {
+  b.addEventListener('click', () => montrer(b.getAttribute('data-retour')));
+});
+document.getElementById('lien-tests').addEventListener('click', function(ev){
+  ev.preventDefault(); lancerTests(); montrer('tests');
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AUTOTESTS
+
+   Ils portent sur les deux choses qui peuvent nuire à quelqu'un si elles
+   sont fausses : ce que contient le message, et à qui il est adressé.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function lancerTests(){
+  const t = [];
+  const verifier = (nom, condition, detail) => t.push({ nom, ok: !!condition, detail: detail || '' });
+
+  const base = {
+    lat: 43.296482, lon: 5.369780, precision: 12,
+    adresse: '12 rue de la République', commune: 'Marseille',
+    branche: 'non', autres: 'aucun', duree: 'quart',
+    horodatage: new Date(2026, 7, 29, 14, 5)
+  };
+  const m = construireConstat(base);
+
+  verifier('Le constat se construit', m && m.corps && m.objet);
+  verifier('Le corps ne contient aucune mention de plaque',
+    !/immatricul|plaque|[A-Z]{2}-\d{3}-[A-Z]{2}/i.test(m.corps),
+    'garde-fou n°4');
+  verifier('Le corps porte la date et l\'heure',
+    m.corps.includes('29/08/2026') && m.corps.includes('14h05'));
+  verifier('Le corps porte les coordonnées relevées',
+    m.corps.includes('43.296482') && m.corps.includes('5.369780'));
+  verifier('Le corps ne porte aucun jugement',
+    !/chauffard|incivil|irrespons|abusif|infraction|illicite|scandal/i.test(m.corps),
+    'garde-fou n°5');
+  verifier('Le corps ne cite aucun article de loi',
+    !/R\s?417|L\s?325|code de la route/i.test(m.corps),
+    'tant que V1-V3 ne sont pas faites');
+  verifier('Le corps dit que l\'auteur ne qualifie pas',
+    m.corps.includes('pas en mesure de qualifier'));
+  verifier('L\'objet porte le lieu et la date',
+    m.objet.includes('12 rue de la République') && m.objet.includes('29/08/2026'));
+
+  const mInvisible = construireConstat(Object.assign({}, base, { branche: 'invisible' }));
+  verifier('« Je ne peux pas voir » ne devient pas une affirmation',
+    mInvisible.corps.includes('je ne peux pas vérifier')
+    && !mInvisible.corps.includes('n\'est pas raccordé au point de charge'));
+
+  const mRaccorde = construireConstat(Object.assign({}, base, { branche: 'oui' }));
+  verifier('Un véhicule raccordé ne produit pas de constat',
+    !!mRaccorde.erreur && !mRaccorde.corps);
+
+  const mAvecPhoto = construireConstat(Object.assign({}, base, { photo: {} }));
+  verifier('Sans photo, le courrier n\'en annonce aucune',
+    !m.corps.includes('photographie'), 'sinon le destinataire la cherche');
+  verifier('Avec photo, le courrier l\'annonce',
+    mAvecPhoto.corps.includes('photographie'));
+
+  const mSansGps = construireConstat(Object.assign({}, base, { lat: null, lon: null }));
+  verifier('Sans GPS, le constat se construit quand même',
+    !!mSansGps.corps && !mSansGps.corps.includes('Coordonnées'));
+
+  verifier('Aucune espace fine ne sort de l\'appli',
+    !/[\u202F\u00A0]/.test(m.corps + m.objet), 'les messageries les rendent mal');
+  verifier('versTexteBrut remplace bien la fine',
+    versTexteBrut('quoi\u202F?') === 'quoi ?');
+
+  verifier('Paris est reconnu', choisirCanal('Paris') !== null);
+  verifier('La casse et les accents n\'empêchent pas la reconnaissance',
+    choisirCanal('  PARIS ') !== null);
+  verifier('Une commune inconnue renvoie le parcours dégradé',
+    choisirCanal('Trifouillis-les-Oies') === null);
+  verifier('Une commune vide renvoie le parcours dégradé', choisirCanal('') === null);
+  verifier('Un canal non vérifié n\'est jamais servi',
+    (function(){
+      CANAUX.push({ commune: '__essai__', type: 'courriel', courriel: 'x@y.z',
+                    libelle: 'essai', note: '', verifie: false, source: '' });
+      const r = choisirCanal('__essai__');
+      CANAUX.pop();
+      return r === null;
+    })(), 'garde-fou n°3');
+  verifier('Toute entrée vérifiée porte une source',
+    CANAUX.filter(c => c.verifie).every(c => c.source && c.source.length > 10));
+
+  const lien = lienMailto('service@exemple.fr', m.objet, m.corps);
+  verifier('Le lien mailto encode les retours à la ligne', lien.includes('%0A'));
+  verifier('Le lien mailto n\'a pas d\'espace brute', !/\s/.test(lien));
+
+  /* Le test qui garde la promesse « zéro requête réseau » : il inspecte
+     la page elle-même. Il tombera le jour où quelqu'un ajoutera un CDN. */
+  const externes = [];
+  document.querySelectorAll('script[src], link[rel=stylesheet], img[src], iframe[src], source[src]')
+    .forEach(el => {
+      const u = el.getAttribute('src') || el.getAttribute('href') || '';
+      if (/^(https?:)?\/\//i.test(u)) externes.push(u);
+    });
+  verifier('Aucune ressource externe n\'est chargée', externes.length === 0, externes.join(', '));
+
+  verifier('Rien n\'est écrit dans le stockage du navigateur',
+    (function(){ try { return window.localStorage.length === 0 && window.sessionStorage.length === 0; }
+                 catch (e) { return true; } }()), 'garde-fou n°4');
+
+  const liste = document.getElementById('resultats-tests');
+  liste.innerHTML = t.map(r =>
+    '<li><span class="' + (r.ok ? 'ok' : 'ko') + '">' + (r.ok ? '✓' : '✗') + '</span> '
+    + r.nom + (r.detail ? ' <span class="doux">— ' + r.detail + '</span>' : '') + '</li>').join('');
+  const echecs = t.filter(r => !r.ok).length;
+  document.getElementById('bilan-tests').innerHTML = echecs === 0
+    ? '<span class="ok">' + t.length + ' tests, aucun échec.</span>'
+    : '<span class="ko">' + echecs + ' échec(s) sur ' + t.length + '.</span>';
+  return { total: t.length, echecs: echecs, details: t };
+}
+
+window.lancerTests = lancerTests;
+window.__constat = { construireConstat, choisirCanal, versTexteBrut, lienMailto, CANAUX };
+
+if (location.hash === '#tests') { lancerTests(); montrer('tests'); }
+</script>
+</body>
+</html>
