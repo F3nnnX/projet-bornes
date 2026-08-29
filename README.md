@@ -23,7 +23,7 @@ projet, ce README n'en est que le suivi.
 | 2 | Choisir l'angle gagnant | [`01-recherche/angle.md`](01-recherche/angle.md) | 🟡 recommandation faite, **décision fondateur attendue** |
 | 3 | Concevoir le service | [`02-plan/plan.md`](02-plan/plan.md) | ✅ sous hypothèse d'angle C |
 | 4 | Construire la marque | `03-marque/marque.md` | ⬜ **non faite** — vérifications INPI/domaine impossibles sans accès web, et le verdict l'interdit avant la phase 0 |
-| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 28 autotests au vert |
+| 5 | Construire le produit (PWA un fichier) | [`04-produit/index.html`](04-produit/index.html) + [notes](04-produit/notes-produit.md) | ✅ prototype, 37 autotests au vert |
 | 6 | Le message type | [`04-produit/message-type.md`](04-produit/message-type.md) | ✅ livré **sans référence juridique** (non vérifiable) |
 | 7 | La preuve — test terrain réel | [`05-terrain/protocole.md`](05-terrain/protocole.md) | 🟡 protocole écrit, mesures bloquées jusqu'au GO |
 | 8 | Essayer de le tuer (red team) | [`06-red-team/red-team.md`](06-red-team/red-team.md) | ✅ 9 attaques, 4 correctifs appliqués |
@@ -45,6 +45,17 @@ web. Aucune source primaire — Légifrance, service-public.fr, data.gouv.fr —
 Toutes les affirmations juridiques sont étiquetées `[CONCORDANT]`, `[ISOLÉ]` ou `[HYPOTHÈSE]`, et
 un **protocole de vérification en 10 points** attend en fin de `recherche.md`. Rien de ce
 document ne doit être recopié ailleurs avant ces vérifications.
+
+### ⚠ Correction du 29 août — la base de contacts existe
+
+La première version de l'étape 1 affirmait qu'aucune base nationale de contacts n'existe. C'était
+faux : l'**Annuaire de l'administration de la DILA** recense plus de 86 000 guichets locaux —
+mairies, commissariats, gendarmeries — avec une API de compétence géographique et une mise à
+jour quotidienne. **Le téléphone y figure ; le champ courriel n'a pas pu être vérifié** (V11).
+
+Conséquence : le **canal téléphonique est constructible à l'échelle nationale dès maintenant**,
+et c'est de toute façon le bon canal principal — faire venir un agent est un problème de latence,
+que l'e-mail ne résout pas. Le produit implémente les deux, téléphone d'abord.
 
 ### Le verdict, en une phrase
 

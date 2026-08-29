@@ -38,7 +38,8 @@ faites.
 | # | Condition | Coût | Qui |
 |---|---|---|---|
 | C1 | **Vérifications V1 à V6** : lire sur Légifrance R417-10, R417-11, 429 CPP, L325-1 et le décret du 23 octobre 2019 | 30 min, 0 € | Un humain avec un navigateur |
-| C2 | **Vérifications V7 et V8** : télécharger les CSV data.gouv et lister leurs colonnes ; ouvrir le site de 5 communes | 1 h, 0 € | idem |
+| C2 | **Vérification V11** : interroger l'API Annuaire de la DILA et lire le schéma — champ courriel présent ? téléphone partout ? | 20 min, 0 € | idem |
+| C2bis | **Vérifications V7 et V8** : colonnes des CSV data.gouv ; site de 5 communes | 1 h, 0 € | idem |
 | C3 | **Remplir un canal vérifié** pour la ville d'amorçage, avec sa source et sa date | 30 min, 0 € | idem |
 
 **Coût total de la phase 0 : environ 2 heures de bureau, 3 sorties terrain, 0 €.**
@@ -74,7 +75,7 @@ Cochée ligne à ligne sur l'état réel du dépôt, pas sur l'intention.
 | ✅ | Étape 2 : synthèse des canaux, recommandation argumentée | `angle.md`. Décision fondateur **en attente** |
 | ✅ | `02-plan/plan.md` : utilisateur, parcours, modèle, ce que le service n'est pas | Écrit |
 | ⬜ | Étape 4 : nom, vérifications INPI / domaine / handles | **Non faite.** Vérifications impossibles sans accès web ; et ce GO l'interdit |
-| ✅ | Étape 5 : PWA un fichier, autotests | `index.html`, 35 ko, 28 autotests, 0 échec, testé à 390 et 1100 px |
+| ✅ | Étape 5 : PWA un fichier, autotests | `index.html`, 39 ko, 37 autotests, 0 échec, testé à 390 et 1100 px, canaux téléphone et courriel |
 | ✅ | Étape 6 : message type, formulations à risque listées | `message-type.md`. **Volontairement amputé** de toute référence juridique |
 | 🟡 | Étape 7 : test terrain | Protocole écrit, mesures **bloquées jusqu'au GO** — c'est-à-dire jusqu'à maintenant |
 | ✅ | Étape 8 : red team | 9 attaques, 4 correctifs appliqués pendant la séance |
@@ -88,6 +89,12 @@ protégé son travail ; mais elle ne remplace pas un regard extérieur, et A1 co
 peut-être été trouvées plus tôt par un autre.
 
 ## Ce que je recommanderais si l'on me demandait de trancher pour de bon
+
+**Mise à jour du 29 août.** A2 — personne ne tiendra la base — est largement tombée : l'Annuaire
+de la DILA existe, l'administration le tient, et il couvre 86 000 guichets. Le projet a donc
+perdu l'une de ses deux objections structurelles, et le canal téléphonique est constructible
+nationalement dès maintenant. Le GO conditionnel n'en est que mieux fondé — mais il reste
+conditionnel, et A8 reste entière.
 
 A8 est l'objection qui me paraît la plus difficile : **le service ne rend pas service à celui qui
 l'utilise.** Il aide le conducteur suivant. Les produits de ce genre survivent par la colère —

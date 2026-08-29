@@ -149,13 +149,34 @@ dans ces jeux de données.
 `[HYPOTHÈSE]` Et le jeu « communes disposant d'une police municipale » liste des **communes**,
 pas des **services** : il dit qu'une police municipale existe, pas comment la joindre.
 
-**Ce que ça détruit.** Le cœur technique du brief — « sélection du destinataire depuis la base
-embarquée » puis `mailto:` préremplie — **n'a pas de base à embarquer**. Il n'existe pas de
-fichier national d'adresses e-mail des services de police, et il n'y a aucune raison qu'il en
-existe un : ces services ne veulent pas d'un canal e-mail ouvert.
+### ⚠ Correction du 29 août 2026 — j'avais conclu trop vite
 
-Ce point est aussi lourd que le risque fatal, et le brief ne l'avait pas anticipé. Un produit
-`mailto:`-only n'a pas de destinataire.
+La première rédaction de ce paragraphe affirmait qu'il n'existe **aucune** base nationale de
+contacts. C'est faux, et l'erreur venait d'avoir cherché les mauvais jeux de données.
+
+`[CONCORDANT]` La DILA publie l'**Annuaire de l'administration — base de données locales** :
+plus de **86 000 guichets publics locaux**, mairies, commissariats et gendarmeries compris,
+avec une **API de compétence géographique** qui donne le service compétent pour une commune, et
+une mise à jour **chaque jour ouvré**
+([jeu de données](https://www.data.gouv.fr/datasets/service-public-gouv-fr-annuaire-de-ladministration-base-de-donnees-locales),
+[API annuaire](https://www.data.gouv.fr/dataservices/api-annuaire-de-ladministration-et-des-services-publics),
+[API compétence géographique](https://www.data.gouv.fr/dataservices/api-annuaire-de-ladministration-competence-geographique-des-services-locaux)).
+
+C'est **exactement** la base que le projet cherchait, et elle résout d'un coup l'objection A2 de
+la red team : elle est tenue par l'administration, pas par un bénévole.
+
+`[HYPOTHÈSE]` **Reste la question qui décide de tout : porte-t-elle un champ courriel ?** Les
+descriptions parlent d'adresse, téléphone, site web, horaires et géolocalisation. Le courriel
+n'est pas mentionné, sans être exclu. L'API n'a pas pu être interrogée depuis cette session.
+
+**Ce qui est acquis en revanche : le téléphone y est.** Le canal téléphonique est donc
+constructible à l'échelle nationale **dès maintenant**, alors que le canal e-mail attend une
+vérification. C'est l'inverse de ce que le brief supposait.
+
+**Ce qui reste vrai du constat initial** : les jeux de données spécifiquement policiers
+(services de police et unités de gendarmerie accueillant du public) exposent nom, adresse et
+téléphone, sans champ courriel apparent. Un produit `mailto:`-only reste donc un pari tant que
+V11 n'est pas faite.
 
 ---
 
@@ -229,7 +250,10 @@ mort du projet mais un **pivot d'angle** — traité à l'étape 2, `angle.md`, 
 | V7 | data.gouv.fr → les 4 jeux cités au §4 | **Télécharger les CSV et lister les colonnes.** Y a-t-il un champ courriel, oui ou non ? Date de dernière mise à jour ? |
 | V8 | Site de 5 communes de tailles différentes | Quel canal de signalement existe : formulaire, appli, e-mail, rien ? C'est l'échantillon qui dit si une base de canaux est constructible. |
 | V9 | `paris.fr` → DansMaRue | Existe-t-il une catégorie « borne de recharge » ou faut-il passer par « stationnement gênant » ? |
-| V10 | Un opérateur (Izivia, Freshmile, TotalEnergies) | Existe-t-il un canal opérateur pour véhicule ventouse, ou seulement pour panne de borne ? |
+| V10 | Un opérateur (Izivia, Freshmile, TotalEnergies) | Existe-t-il un canal opérateur pour véhicule ventouse, ou seulement pour panne de borne ? |
+| **V11** | **API Annuaire de l'administration (DILA)** — interroger un enregistrement de type mairie, puis commissariat | **Le schéma porte-t-il un champ courriel, et est-il rempli ?** Et le téléphone est-il bien présent partout ? |
 
-V7 et V8 sont les plus importantes : elles décident si le produit est constructible à l'échelle
-nationale ou seulement ville par ville.
+**V11 est devenue la plus importante des onze.** Elle décide à elle seule si le canal e-mail est
+national ou inexistant — donc si le produit ressemble à ce que le brief imaginait ou à autre
+chose. V7 et V8 la complètent : elles disent ce que valent les autres sources et ce que
+proposent réellement les communes.

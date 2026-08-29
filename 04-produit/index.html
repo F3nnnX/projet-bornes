@@ -267,6 +267,17 @@ const CANAUX = [
   }
 ];
 
+/* Une borne bloquée n'est pas une urgence. Router vers le 17, le 112 ou
+   le 15 encombrerait une ligne de secours et discréditerait le service en
+   une seule mauvaise presse. La liste est un refus dur, pas un réglage. */
+const NUMEROS_INTERDITS = ['17', '112', '15', '18', '114'];
+
+function numeroUtilisable(n){
+  const brut = String(n || '').replace(/[^0-9+]/g, '');
+  if (!brut) return false;
+  return NUMEROS_INTERDITS.indexOf(brut) === -1;
+}
+
 /* État du constat en cours. En mémoire seulement : rien n'est persisté, et
    un rechargement de page efface tout. C'est voulu — pas d'historique. */
 const constat = {
@@ -390,6 +401,35 @@ function construireConstat(etat){
   return { objet: versTexteBrut(objet), corps: versTexteBrut(lignes.join('\n')) };
 }
 
+/* Au téléphone, on ne lit pas une lettre : on donne trois faits et on se
+   tait. Le script reste court volontairement — au-delà de quelques
+   phrases, l'appelant improvise, et c'est là qu'il dit « ce chauffard ». */
+function construireScriptTelephone(etat){
+  if (etat.branche === 'oui') {
+    return { erreur: 'Le véhicule est raccordé : il n\'y a pas de constat à faire.' };
+  }
+  const d = etat.horodatage instanceof Date ? etat.horodatage : new Date();
+  const lieu = etat.adresse ? etat.adresse : 'lieu non précisé';
+  const commune = etat.commune ? etat.commune : '';
+  const l = [];
+  l.push('Bonjour. Je vous appelle pour signaler une situation, ce n\'est pas une urgence.');
+  l.push('Je suis ' + lieu + (commune ? ', à ' + commune : '') + '.');
+  l.push('Un emplacement de recharge pour véhicules électriques est occupé par un véhicule '
+    + (etat.branche === 'invisible'
+        ? 'dont je ne peux pas vérifier s\'il est raccordé'
+        : 'qui n\'est pas raccordé à la borne') + '.');
+  if (etat.reserve === 'oui') l.push('L\'emplacement est bien signalé comme réservé à la recharge.');
+  if (etat.autres === 'aucun') l.push('Il n\'y a pas d\'autre place de recharge libre ici.');
+  l.push('Il est ' + formaterHeure(d) + '. J\'ai pris une photo si elle vous est utile.');
+  l.push('Je ne sais pas si quelqu\'un peut passer — je vous laisse en juger.');
+  return { script: versTexteBrut(l.join('\n')) };
+}
+
+function lienTel(numero){
+  if (!numeroUtilisable(numero)) return null;
+  return 'tel:' + String(numero).replace(/[^0-9+]/g, '');
+}
+
 function lienMailto(adresseCourriel, objet, corps){
   return 'mailto:' + encodeURIComponent(adresseCourriel || '')
     + '?subject=' + encodeURIComponent(versTexteBrut(objet))
@@ -504,7 +544,23 @@ function preparerEnvoi(){
   }
   dernierLieuConstate = cle;
 
-  if (canal && canal.type === 'courriel') {
+  if (canal && canal.type === 'telephone') {
+    const tel = lienTel(canal.numero);
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="carte"><strong>' + canal.libelle + '</strong>' +
+      '<p class="doux">' + canal.note + '</p>' +
+      '<p class="doux">Source : ' + canal.source + '</p></div>');
+    const script = construireScriptTelephone(constat);
+    blocCanal.insertAdjacentHTML('beforeend',
+      '<div class="info"><strong>À dire, dans cet ordre.</strong><br>' +
+      script.script.split('\n').map(x => x.replace(/</g,'&lt;')).join('<br>') + '</div>');
+    if (tel) {
+      const a = document.createElement('a');
+      a.className = 'bouton'; a.href = tel;
+      a.textContent = 'Appeler ' + canal.numero;
+      blocActions.appendChild(a);
+    }
+  } else if (canal && canal.type === 'courriel') {
     blocCanal.insertAdjacentHTML('beforeend',
       '<div class="carte"><strong>' + canal.libelle + '</strong>' +
       '<p class="doux">' + canal.note + '</p>' +
@@ -653,6 +709,26 @@ function lancerTests(){
   verifier('Toute entrée vérifiée porte une source',
     CANAUX.filter(c => c.verifie).every(c => c.source && c.source.length > 10));
 
+  const sc = construireScriptTelephone(base);
+  verifier('Le script téléphonique se construit', !!sc.script);
+  verifier('Le script annonce que ce n\'est pas une urgence',
+    sc.script.includes('ce n\'est pas une urgence'));
+  verifier('Le script reste court', sc.script.length < 500,
+    sc.script.length + ' caractères — au-delà, l\'appelant improvise');
+  verifier('Le script ne porte ni plaque ni jugement',
+    !/immatricul|plaque|chauffard|incivil|infraction/i.test(sc.script));
+  verifier('Le script laisse la décision à l\'agent',
+    sc.script.includes('je vous laisse en juger'));
+  verifier('Un véhicule raccordé ne produit pas de script',
+    !!construireScriptTelephone(Object.assign({}, base, { branche: 'oui' })).erreur);
+  verifier('Le 17 et les autres numéros d\'urgence sont refusés',
+    ['17','112','15','18','114'].every(n => lienTel(n) === null),
+    'une borne bloquée n\'est pas une urgence');
+  verifier('Un numéro ordinaire est accepté',
+    lienTel('04 91 00 00 00') === 'tel:0491000000');
+  verifier('Aucune entrée de la base ne porte un numéro d\'urgence',
+    CANAUX.filter(c => c.type === 'telephone').every(c => numeroUtilisable(c.numero)));
+
   const lien = lienMailto('service@exemple.fr', m.objet, m.corps);
   verifier('Le lien mailto encode les retours à la ligne', lien.includes('%0A'));
   verifier('Le lien mailto n\'a pas d\'espace brute', !/\s/.test(lien));
@@ -683,7 +759,8 @@ function lancerTests(){
 }
 
 window.lancerTests = lancerTests;
-window.__constat = { construireConstat, choisirCanal, versTexteBrut, lienMailto, CANAUX };
+window.__constat = { construireConstat, construireScriptTelephone, choisirCanal,
+                     versTexteBrut, lienMailto, lienTel, numeroUtilisable, CANAUX };
 
 if (location.hash === '#tests') { lancerTests(); montrer('tests'); }
 </script>

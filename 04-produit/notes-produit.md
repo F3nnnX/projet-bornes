@@ -1,6 +1,6 @@
 # Notes produit — arbitrages et ce qui a été testé
 
-Prototype `index.html`, 35 ko, un seul fichier, aucune dépendance.
+Prototype `index.html`, 39 ko, un seul fichier, aucune dépendance.
 
 ---
 
@@ -8,7 +8,7 @@ Prototype `index.html`, 35 ko, un seul fichier, aucune dépendance.
 
 Chromium via Playwright, `file://`, 390 px et 1100 px, le 29 août 2026.
 
-- **28 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
+- **37 autotests embarqués, 0 échec.** Accessibles depuis le pied de page ou par `#tests`.
 - **Parcours complet joué** : accueil → photo → lieu → situation → envoi, dans les deux cas
   (commune connue, commune inconnue).
 - **Aucune erreur console.**
@@ -29,6 +29,10 @@ sont fausses : **ce que contient le message** et **à qui il est adressé**.
 | toute entrée vérifiée porte une source | garde-fou n°3 |
 | la page ne charge **aucune ressource externe** | garde-fou zéro réseau |
 | `localStorage` et `sessionStorage` restent vides | garde-fou n°4 |
+| le script téléphonique reste sous 500 caractères | au-delà, l'appelant improvise |
+| le script annonce que ce n'est pas une urgence | ne pas encombrer un service de secours |
+| le 17, le 112, le 15, le 18 et le 114 sont **refusés** | une borne bloquée n'est pas une urgence |
+| aucune entrée de la base ne porte un numéro d'urgence | même raison, côté données |
 
 Le test « aucune ressource externe » inspecte la page elle-même au moment où il tourne. Il
 tombera le jour où quelqu'un ajoutera un CDN — c'est exactement son rôle.
@@ -47,6 +51,22 @@ tombera le jour où quelqu'un ajoutera un CDN — c'est exactement son rôle.
 ---
 
 ## Arbitrages
+
+### Le téléphone est le canal principal, l'e-mail la trace
+
+Ajouté le 29 août 2026, après la question du fondateur. Le but du service est qu'un agent vienne
+**pendant que le véhicule est encore là** : c'est un problème de latence, et une boîte générique
+n'est pas relevée dans le quart d'heure. Quand un canal téléphonique est connu, l'appli affiche
+donc un **script court à lire** et un bouton `tel:` qui compose le numéro.
+
+Le script fait moins de 500 caractères, et un autotest le garde à cette longueur. Ce n'est pas
+de l'esthétique : au-delà de quelques phrases, l'appelant improvise, et c'est exactement là
+qu'il dit « ce chauffard ». La dernière phrase — *« je vous laisse en juger »* — rend la décision
+à l'agent, comme le fait le courrier.
+
+**Un refus dur, codé et testé** : `lienTel()` renvoie `null` pour le 17, le 112, le 15, le 18 et
+le 114, et un autotest vérifie qu'aucune entrée de la base ne porte un de ces numéros. Une borne
+bloquée n'est pas une urgence. Ce n'est pas un réglage qu'on assouplira plus tard.
 
 ### Pas de fond de carte, donc pas d'adresse automatique
 

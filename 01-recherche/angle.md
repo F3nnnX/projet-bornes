@@ -110,6 +110,33 @@ Il couvrira quelques communes correctement et dégradera ailleurs. C'est un choi
 
 ---
 
+## Mail ou téléphone — la question du fondateur, tranchée
+
+Posée le 29 août 2026 : « on peut le faire par téléphone, mais je me suis dit que par mail ça
+fonctionnerait aussi ». Les deux fonctionnent, mais **pas pour la même chose**, et il ne faut
+pas choisir : il faut les hiérarchiser.
+
+| | Téléphone | E-mail |
+|---|---|---|
+| **Base nationale** | ✅ le numéro figure dans les jeux de données ouverts | ⚠ champ courriel non vérifié (V11) |
+| **Latence** | quelqu'un décroche maintenant | une boîte générique, relevée quand elle l'est |
+| **Trace écrite** | aucune | horodatée, réutilisable |
+| **Photo** | impossible | jointe par l'utilisateur |
+| **Coût pour l'utilisateur** | il faut parler à quelqu'un | rien à affronter |
+
+Le but du service est qu'**un agent vienne pendant que le véhicule est encore là**. C'est un
+problème de latence, et sur la latence l'e-mail perd toujours : une boîte générique n'est pas
+relevée dans le quart d'heure. **Le téléphone est donc le canal principal, et l'e-mail la
+trace.** L'inverse de ce que supposait le brief.
+
+Conséquence dans le produit, déjà implémentée : quand un canal téléphonique est connu, l'appli
+affiche un **script court à lire** — trois faits, aucun jugement, la décision laissée à l'agent —
+et un bouton qui compose le numéro. Le constat écrit reste disponible en second, pour la trace.
+
+**Un refus dur, codé et testé** : l'appli n'appellera jamais le 17, le 112, le 15, le 18 ni le
+114. Une borne bloquée n'est pas une urgence ; encombrer une ligne de secours coulerait le projet
+en un seul article de presse.
+
 ## ⬜ Décision fondateur attendue
 
 | | |

@@ -43,7 +43,14 @@ Conséquence : au bout de dix-huit mois, l'appli enverra des gens vers des canau
 affichant qu'ils sont vérifiés. **Elle sera pire que rien**, parce qu'elle donnera l'illusion
 d'avoir agi.
 
-**Gravité : maximale.** C'est, à mon sens, le vrai tueur du projet — plus que le droit.
+**Mise à jour du 29 août — cette attaque est fortement affaiblie.** L'Annuaire de
+l'administration de la DILA recense 86 000 guichets locaux, avec une API de compétence
+géographique et une mise à jour chaque jour ouvré. **La base existe et c'est l'administration
+qui la tient**, pas un bénévole. A2 ne tombe pas complètement — il reste à vérifier qu'elle porte
+les bons champs (V11) et qu'elle désigne le bon service pour un stationnement — mais elle passe
+de « tueur du projet » à « dépendance à vérifier ».
+
+**Gravité : ramenée de maximale à moyenne**, sous réserve de V11.
 **Ce qui l'atténue, imparfaitement :** dater chaque entrée dans le produit et **faire expirer
 automatiquement** un canal non revérifié depuis douze mois, en basculant sur le parcours
 dégradé. Moins satisfaisant, mais honnête. À implémenter avant tout GO.
@@ -153,7 +160,7 @@ Leçon RendsMoi : le compte annoncé doit être le compte exécutable. Vérifica
 |---|---|---|
 | « 25 autotests » (avant correctifs) | 25 à l'audit, **28** après les correctifs A4 et A5 | ✅ chiffre mis à jour partout |
 | « 0 échec » | exécution Chromium du 29/08/2026 | ✅ exact |
-| « 33 ko » | exact à l'audit ; **35 ko** après les correctifs | ✅ chiffre mis à jour |
+| « 33 ko » | exact à l'audit ; **39 ko** après les correctifs et le canal téléphone | ✅ chiffre mis à jour |
 | « un seul fichier, aucune dépendance » | aucun `src`/`link` externe, autotest à l'appui | ✅ exact |
 | « aucune donnée ne quitte ce navigateur » | faux — le constat en sort | ❌ **corrigé** |
 | « aucune donnée côté serveur » | l'hébergeur journalise les IP | ❌ **à corriger** (A3) |
